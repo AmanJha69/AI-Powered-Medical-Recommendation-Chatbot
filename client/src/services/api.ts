@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AuthResponse, Chat, Message, User } from '../types';
+import type { AuthResponse, Chat, Message, User, DoctorRecommendation } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -32,6 +32,9 @@ export const chatApi = {
     api.post<{ userMessage: Message; assistantMessage: Message }>(`/chats/${id}/messages`, {
       content,
     }),
+};
+export const doctorApi = {
+  list: (symptom?: string) => api.get<DoctorRecommendation[]>('/doctors', { params: { symptom } }),
 };
 
 export default api;

@@ -48,7 +48,7 @@ export default function Register() {
               🏥
             </div>
             <h1 className="text-2xl font-bold text-slate-800">Create account</h1>
-            <p className="mt-1 text-sm text-slate-500">Join MedAssist AI healthcare assistant</p>
+            <p className="mt-1 text-sm text-slate-500">Join Dr. G healthcare assistant</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

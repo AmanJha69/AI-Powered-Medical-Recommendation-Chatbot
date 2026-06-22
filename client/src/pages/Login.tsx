@@ -42,7 +42,7 @@ export default function Login() {
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-2xl">
               🏥
             </div>
-            <h1 className="text-2xl font-bold text-slate-800">MedAssist AI</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Dr. G</h1>
             <p className="mt-1 text-sm text-slate-500">Sign in to your healthcare assistant</p>
           </div>
 

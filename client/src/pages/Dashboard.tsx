@@ -1,217 +1,160 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { chatApi } from '../services/api';
-import { useSocket } from '../hooks/useSocket';
+import { doctorApi } from '../services/api';
 import DisclaimerBanner from '../components/DisclaimerBanner';
-import ChatSidebar from '../components/ChatSidebar';
-import ChatBubble from '../components/ChatBubble';
-import ChatInput from '../components/ChatInput';
-import TypingIndicator from '../components/TypingIndicator';
-import SymptomChips from '../components/SymptomChips';
-import type { Chat, Message } from '../types';
+import DoctorCard from '../components/DoctorCard';
+import type { DoctorRecommendation } from '../types';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [aiThinking, setAiThinking] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const navigate = useNavigate();
+  const [doctors, setDoctors] = useState<DoctorRecommendation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, aiThinking, isTyping]);
-
-  const loadChats = useCallback(async () => {
-    try {
-      const { data } = await chatApi.list();
-      setChats(data);
-    } catch {
-      toast.error('Failed to load chats');
-    }
-  }, []);
-
-  const loadChat = useCallback(async (chatId: string) => {
-    try {
-      const { data } = await chatApi.get(chatId);
-      setMessages(data.messages);
-      setActiveChatId(chatId);
-    } catch {
-      toast.error('Failed to load chat');
-    }
-  }, []);
-
-  useEffect(() => {
-    loadChats();
-  }, [loadChats]);
-
-  const { joinChat, sendMessage, emitTypingStart, emitTypingStop } = useSocket({
-    onMessage: (message, chatTitle) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m._id === message._id)) return prev;
-        return [...prev, message];
-      });
-      if (chatTitle) {
-        setChats((prev) =>
-          prev.map((c) => (c._id === message.chatId ? { ...c, title: chatTitle } : c))
-        );
-      }
-      loadChats();
-    },
-    onTypingStart: () => setIsTyping(true),
-    onTypingStop: () => setIsTyping(false),
-    onAiThinking: (_chatId, thinking) => setAiThinking(thinking),
-    onError: (msg) => toast.error(msg),
-  });
-
-  useEffect(() => {
-    if (activeChatId) joinChat(activeChatId);
-  }, [activeChatId, joinChat]);
-
-  const handleNewChat = async () => {
-    try {
-      const { data } = await chatApi.create();
-      setChats((prev) => [data, ...prev]);
-      setActiveChatId(data._id);
-      setMessages([]);
-      joinChat(data._id);
-    } catch {
-      toast.error('Failed to create chat');
-    }
-  };
-
-  const handleDeleteChat = async (id: string) => {
-    try {
-      await chatApi.delete(id);
-      setChats((prev) => prev.filter((c) => c._id !== id));
-      if (activeChatId === id) {
-        setActiveChatId(null);
-        setMessages([]);
-      }
-      toast.success('Chat deleted');
-    } catch {
-      toast.error('Failed to delete chat');
-    }
-  };
-
-  const handleSendWithChat = async (content: string) => {
-    let chatId = activeChatId;
-    if (!chatId) {
+    const fetchDoctors = async () => {
       try {
-        const { data } = await chatApi.create();
-        setChats((prev) => [data, ...prev]);
-        setActiveChatId(data._id);
-        chatId = data._id;
-        joinChat(data._id);
+        const { data } = await doctorApi.list();
+        setDoctors(data.slice(0, 4)); // Show top 4 doctors
       } catch {
-        toast.error('Failed to create chat');
-        return;
+        toast.error('Failed to load doctors');
+      } finally {
+        setLoading(false);
       }
-    }
-    sendMessage(chatId, content);
-  };
+    };
+    fetchDoctors();
+  }, []);
+
+  const categories = [
+    { name: 'General Physician', icon: '👨‍⚕️', color: 'bg-blue-100 text-blue-600' },
+    { name: 'Cardiologist', icon: '❤️', color: 'bg-red-100 text-red-600' },
+    { name: 'Dermatologist', icon: '🧴', color: 'bg-amber-100 text-amber-600' },
+    { name: 'Pediatrician', icon: '👶', color: 'bg-green-100 text-green-600' },
+    { name: 'Psychiatrist', icon: '🧠', color: 'bg-purple-100 text-purple-600' },
+    { name: 'Orthopedist', icon: '🦴', color: 'bg-orange-100 text-orange-600' },
+  ];
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="min-h-screen bg-slate-50">
       <DisclaimerBanner />
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
-          <div>
-            <h1 className="text-lg font-semibold text-slate-800">MedAssist AI</h1>
-            <p className="text-xs text-slate-500">Hello, {user?.name}</p>
+      
+      {/* Navbar */}
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-white shadow-lg shadow-primary-600/20">
+              <span className="text-xl font-bold">+</span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dr. G</h1>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <span className="hidden text-sm font-medium text-slate-600 sm:block">
+              Welcome, {user?.name}
+            </span>
+            <button
+              onClick={logout}
+              className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            >
+              Sign out
+            </button>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-        >
-          Logout
-        </button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <ChatSidebar
-          chats={chats}
-          activeChatId={activeChatId}
-          onSelectChat={loadChat}
-          onNewChat={handleNewChat}
-          onDeleteChat={handleDeleteChat}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-primary-600 px-6 py-12 shadow-2xl sm:px-12 sm:py-16">
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+          
+          <div className="relative z-10 mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+              Your Health, Our Priority
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-primary-100">
+              Consult top doctors, check your symptoms instantly with our AI, and get personalized lifestyle tips—all in one place.
+            </p>
+            <div className="mt-8 flex justify-center gap-4">
+              <button 
+                onClick={() => navigate('/chat')}
+                className="rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-primary-600 shadow-md transition hover:bg-slate-50"
+              >
+                Start AI Consultation
+              </button>
+            </div>
+          </div>
+        </div>
 
-        <main className="flex flex-1 flex-col bg-slate-50">
-          {!activeChatId ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-4">
-              <div className="max-w-lg text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-3xl">
-                  💬
+        {/* Categories Section */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-slate-900">Explore by Specialty</h3>
+            <button className="text-sm font-medium text-primary-600 hover:text-primary-700">View all &rarr;</button>
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {categories.map((category) => (
+              <button
+                key={category.name}
+                className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-primary-200 hover:shadow-md"
+              >
+                <div className={`flex h-16 w-16 items-center justify-center rounded-full ${category.color} text-2xl`}>
+                  {category.icon}
                 </div>
-                <h2 className="text-xl font-semibold text-slate-800">
-                  How can I help you today?
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  Describe your symptoms or pick a quick option below to start a conversation.
-                </p>
-                <div className="mt-6">
-                  <SymptomChips onSelect={handleSendWithChat} />
-                </div>
-              </div>
-              <div className="mt-8 w-full max-w-2xl">
-                <ChatInput
-                  onSend={handleSendWithChat}
-                  onTypingStart={() => {}}
-                  onTypingStop={() => {}}
-                />
-              </div>
+                <span className="mt-4 text-center text-sm font-medium text-slate-700">{category.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Doctors Section */}
+        <div className="mt-16">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-slate-900">Top Doctors Near You</h3>
+            <button className="text-sm font-medium text-primary-600 hover:text-primary-700">See all doctors &rarr;</button>
+          </div>
+          {loading ? (
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-64 animate-pulse rounded-xl bg-slate-200"></div>
+              ))}
             </div>
           ) : (
-            <>
-              <div className="flex-1 overflow-y-auto px-4 py-6">
-                <div className="mx-auto max-w-3xl space-y-4">
-                  {messages.length === 0 && (
-                    <div className="mb-4">
-                      <SymptomChips onSelect={handleSendWithChat} disabled={aiThinking} />
-                    </div>
-                  )}
-                  {messages.map((msg) => (
-                    <ChatBubble key={msg._id} message={msg} />
-                  ))}
-                  {aiThinking && <TypingIndicator />}
-                  {isTyping && !aiThinking && (
-                    <p className="text-xs text-slate-400">Assistant is typing...</p>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              </div>
-              <div className="mx-auto w-full max-w-3xl">
-                <ChatInput
-                  onSend={handleSendWithChat}
-                  onTypingStart={() => activeChatId && emitTypingStart(activeChatId)}
-                  onTypingStop={() => activeChatId && emitTypingStop(activeChatId)}
-                  disabled={aiThinking}
-                />
-              </div>
-            </>
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {doctors.map((doctor) => (
+                <DoctorCard key={doctor._id || doctor.name} doctor={doctor} />
+              ))}
+            </div>
           )}
-        </main>
-      </div>
+        </div>
+
+        {/* Health Tips Section */}
+        <div className="mt-16 mb-8">
+          <h3 className="text-xl font-bold text-slate-900">Healthy Lifestyle Tips</h3>
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+              <div className="flex w-1/3 items-center justify-center bg-teal-100 text-4xl">
+                🏃‍♂️
+              </div>
+              <div className="w-2/3 p-6">
+                <h4 className="font-bold text-slate-900">Daily Exercise Routine</h4>
+                <p className="mt-2 text-sm text-slate-600">Just 30 minutes of brisk walking every day can significantly improve your cardiovascular health.</p>
+              </div>
+            </div>
+            <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+              <div className="flex w-1/3 items-center justify-center bg-amber-100 text-4xl">
+                🥗
+              </div>
+              <div className="w-2/3 p-6">
+                <h4 className="font-bold text-slate-900">Balanced Diet Basics</h4>
+                <p className="mt-2 text-sm text-slate-600">Incorporate more leafy greens and lean proteins into your meals to boost your energy levels.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

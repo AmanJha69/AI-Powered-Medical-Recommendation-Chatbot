@@ -5,6 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import ChatPage from './pages/ChatPage';
+import ChatWidget from './components/ChatWidget';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -49,8 +51,19 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        
+        {/* ChatWidget is available globally but hidden on /chat via its own internal logic */}
+        <ChatWidget />
       </BrowserRouter>
     </AuthProvider>
   );
