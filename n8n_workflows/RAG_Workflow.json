@@ -1,0 +1,75 @@
+{
+  "name": "Medical Chatbot RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "medical-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 250, 300 ],
+      "webhookId": "medical-chat"
+    },
+    {
+      "parameters": {
+        "model": "gemini-2.0-flash",
+        "prompt": "={{ $json.body.userMessage }}",
+        "systemMessage": "You are a helpful healthcare assistant chatbot.\n\nIMPORTANT RULES:\n- You are NOT a doctor and cannot provide definitive diagnoses. Use phrases like \"possible\", \"may\", \"could be\".\n- For emergency symptoms, set urgency to \"high\" and strongly urge immediate emergency care.\n- Only suggest over-the-counter (OTC) medicines when appropriate. Never suggest controlled substances.\n\nRespond ONLY with valid JSON in this exact format (no markdown, no code fences):\n{\n  \"reply\": \"Your friendly, empathetic response to the user\",\n  \"possibleCauses\": [\"cause1\", \"cause2\"],\n  \"medicineSuggestions\": [{ \"name\": \"Medicine name\", \"note\": \"Usage note and disclaimer\" }],\n  \"healthTips\": [\"tip1\", \"tip2\"],\n  \"urgency\": \"low|medium|high\",\n  \"recommendedSpecialty\": \"Specialty name e.g. General Physician, Dermatologist\"\n}",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "2",
+      "name": "Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [ 500, 300 ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [ 750, 300 ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1"
+}

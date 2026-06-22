@@ -1,0 +1,136 @@
+{
+  "name": "Medical Chatbot True RAG (PDF)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "medical-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 250, 300 ],
+      "webhookId": "medical-chat"
+    },
+    {
+      "parameters": {
+        "model": "gemini-2.0-flash",
+        "prompt": "={{ $json.body.userMessage }}",
+        "systemMessage": "You are a helpful healthcare assistant chatbot.\nUse the provided context to answer the user's question.\n\nIMPORTANT RULES:\n- You are NOT a doctor and cannot provide definitive diagnoses. Use phrases like \"possible\", \"may\", \"could be\".\n- For emergency symptoms, set urgency to \"high\" and strongly urge immediate emergency care.\n- Only suggest over-the-counter (OTC) medicines when appropriate. Never suggest controlled substances.\n\nRespond ONLY with valid JSON in this exact format:\n{\n  \"reply\": \"Your response\",\n  \"possibleCauses\": [\"cause1\", \"cause2\"],\n  \"medicineSuggestions\": [{ \"name\": \"Medicine name\", \"note\": \"Usage note\" }],\n  \"healthTips\": [\"tip1\", \"tip2\"],\n  \"urgency\": \"low|medium|high\",\n  \"recommendedSpecialty\": \"Specialty\"\n}",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "2",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [ 500, 300 ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "3",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [ 800, 300 ]
+    },
+    {
+      "parameters": {},
+      "id": "4",
+      "name": "In-Memory Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1,
+      "position": [ 500, 500 ]
+    },
+    {
+      "parameters": {
+        "model": "models/embedding-001"
+      },
+      "id": "5",
+      "name": "Gemini Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [ 500, 700 ]
+    },
+    {
+      "parameters": {
+        "filePath": "c:/Users/dell/Desktop/Medical work/AI Powered Medical Recommendation Chatbot.pdf"
+      },
+      "id": "6",
+      "name": "Read PDF",
+      "type": "@n8n/n8n-nodes-langchain.documentPdf",
+      "typeVersion": 1,
+      "position": [ 700, 700 ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In-Memory Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "In-Memory Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PDF": {
+      "ai_document": [
+        [
+          {
+            "node": "In-Memory Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2"
+}
