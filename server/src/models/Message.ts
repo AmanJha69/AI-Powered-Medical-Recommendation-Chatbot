@@ -23,14 +23,27 @@ export interface IMessageMetadata {
   doctors?: DoctorRecommendation[];
 }
 
+export interface IAttachment {
+  name: string;
+  type: string;
+  data: string; // Base64
+}
+
 export interface IMessage extends Document {
   chatId: Types.ObjectId;
   userId: Types.ObjectId;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  attachments?: IAttachment[];
   metadata?: IMessageMetadata;
   createdAt: Date;
 }
+
+const attachmentSchema = new Schema<IAttachment>({
+  name: { type: String, required: true },
+  type: { type: String, required: true },
+  data: { type: String, required: true },
+}, { _id: false });
 
 const messageSchema = new Schema<IMessage>(
   {
@@ -38,6 +51,7 @@ const messageSchema = new Schema<IMessage>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     role: { type: String, enum: ['user', 'assistant', 'system'], required: true },
     content: { type: String, required: true },
+    attachments: [attachmentSchema],
     metadata: { type: Schema.Types.Mixed },
   },
   { timestamps: { createdAt: true, updatedAt: false } }

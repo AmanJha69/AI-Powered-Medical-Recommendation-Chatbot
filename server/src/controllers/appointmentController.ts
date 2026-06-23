@@ -1,0 +1,76 @@
+import { Request, Response } from 'express';
+import axios from 'axios';
+import { Appointment } from '../models/Appointment';
+import { User } from '../models/User';
+import { AuthRequest } from '../middleware/auth';
+
+export async function bookAppointment(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { doctorId, date, time } = req.body;
+    
+    if (!doctorId || !date || !time) {
+      res.status(400).json({ message: 'Doctor ID, date, and time are required' });
+      return;
+    }
+
+    const userId = req.userId;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const appointment = new Appointment({
+      userId,
+      doctorId,
+      date,
+      time,
+      status: 'confirmed',
+    });
+
+    await appointment.save();
+    
+    // Populate doctor details before returning
+    await appointment.populate('doctorId', 'name specialty location contact fee');
+
+    // If n8n mode is enabled, trigger the n8n webhook asynchronously
+    if (process.env.USE_N8N === 'true' && process.env.N8N_APPOINTMENT_WEBHOOK_URL) {
+      try {
+        axios.post(process.env.N8N_APPOINTMENT_WEBHOOK_URL, {
+          appointmentId: appointment._id,
+          userId,
+          userName: user.name,
+          userEmail: user.email,
+          doctorId: appointment.doctorId,
+          date,
+          time,
+        }).catch(err => console.error('Failed to trigger n8n appointment webhook:', err.message));
+      } catch (e) {
+        // Ignore errors to not break the frontend flow
+      }
+    }
+
+    res.status(201).json(appointment);
+  } catch (error) {
+    console.error('Error booking appointment:', error);
+    res.status(500).json({ message: 'Failed to book appointment' });
+  }
+}
+
+export async function getUserAppointments(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const appointments = await Appointment.find({ userId: req.userId })
+      .populate('doctorId', 'name specialty location contact fee')
+      .sort({ createdAt: -1 });
+      
+    res.json(appointments);
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ message: 'Failed to fetch appointments' });
+  }
+}

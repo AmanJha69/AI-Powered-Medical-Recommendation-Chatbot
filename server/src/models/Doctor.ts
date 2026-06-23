@@ -7,6 +7,10 @@ export interface IDoctor extends Document {
   rating: number;
   contact: string;
   symptomsKeywords: string[];
+  experienceYears: number;
+  patientsCount: number;
+  about: string;
+  fee: number;
 }
 
 const doctorSchema = new Schema<IDoctor>({
@@ -16,6 +20,10 @@ const doctorSchema = new Schema<IDoctor>({
   rating: { type: Number, default: 4.5 },
   contact: { type: String, required: true },
   symptomsKeywords: { type: [String], default: [] },
+  experienceYears: { type: Number, default: 0 },
+  patientsCount: { type: Number, default: 0 },
+  about: { type: String, default: '' },
+  fee: { type: Number, default: 500 },
 });
 
 doctorSchema.index({ specialty: 1 });

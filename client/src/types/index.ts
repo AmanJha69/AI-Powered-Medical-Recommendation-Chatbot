@@ -16,6 +16,10 @@ export interface DoctorRecommendation {
   location: string;
   rating: number;
   contact: string;
+  experienceYears?: number;
+  patientsCount?: number;
+  about?: string;
+  fee?: number;
 }
 
 export interface MessageMetadata {
@@ -27,12 +31,19 @@ export interface MessageMetadata {
   doctors?: DoctorRecommendation[];
 }
 
+export interface Attachment {
+  name: string;
+  type: string;
+  data: string; // Base64 encoded data
+}
+
 export interface Message {
   _id: string;
   chatId: string;
   userId: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  attachments?: Attachment[];
   metadata?: MessageMetadata;
   createdAt: string;
 }

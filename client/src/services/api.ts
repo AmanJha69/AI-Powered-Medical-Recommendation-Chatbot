@@ -37,4 +37,10 @@ export const doctorApi = {
   list: (symptom?: string) => api.get<DoctorRecommendation[]>('/doctors', { params: { symptom } }),
 };
 
+export const appointmentApi = {
+  book: (data: { doctorId: string; date: string; time: string }) => 
+    api.post('/appointments', data),
+  list: () => api.get('/appointments'),
+};
+
 export default api;

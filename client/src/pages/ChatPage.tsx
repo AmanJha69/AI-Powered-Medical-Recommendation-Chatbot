@@ -120,8 +120,8 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+    <div className="flex h-screen flex-col bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
+      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/')}
@@ -141,14 +141,14 @@ export default function ChatPage() {
             ☰
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-slate-800">Dr. G Chat</h1>
-            <p className="text-xs text-slate-500">Hello, {user?.name}</p>
+            <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Dr. G Chat</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Hello, {user?.name}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={logout}
-          className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          className="rounded-lg px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           Logout
         </button>
@@ -165,17 +165,17 @@ export default function ChatPage() {
           onClose={() => setSidebarOpen(false)}
         />
 
-        <main className="flex flex-1 flex-col bg-slate-50">
+        <main className="flex flex-1 flex-col bg-slate-50 dark:bg-slate-950">
           {!activeChatId ? (
             <div className="flex flex-1 flex-col items-center justify-center px-4">
               <div className="max-w-lg text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-3xl">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-3xl dark:bg-primary-900/50">
                   💬
                 </div>
-                <h2 className="text-xl font-semibold text-slate-800">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
                   How can I help you today?
                 </h2>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                   Describe your symptoms or pick a quick option below to start a conversation.
                 </p>
                 <div className="mt-6">

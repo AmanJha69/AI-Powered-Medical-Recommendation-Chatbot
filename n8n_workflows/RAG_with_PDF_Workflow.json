@@ -1,6 +1,47 @@
 {
-  "name": "Medical Chatbot True RAG (PDF)",
+  "name": "Medical Chatbot Agentic RAG",
   "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger_manual",
+      "name": "On clicking 'execute'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "insert"
+      },
+      "id": "vector_store_insert",
+      "name": "Insert Data to Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1,
+      "position": [250, 0]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "mode": "readFromFiles",
+        "filePaths": "c:/Users/dell/Desktop/Medical work/AI Powered Medical Recommendation Chatbot.pdf"
+      },
+      "id": "data_loader",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [350, 200]
+    },
+    {
+      "parameters": {
+        "chunkSize": 1000,
+        "chunkOverlap": 100
+      },
+      "id": "text_splitter",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterRecursive",
+      "typeVersion": 1,
+      "position": [450, 400]
+    },
     {
       "parameters": {
         "httpMethod": "POST",
@@ -8,82 +49,133 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "1",
+      "id": "webhook",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [ 250, 300 ],
+      "typeVersion": 1.1,
+      "position": [0, 600],
       "webhookId": "medical-chat"
     },
     {
       "parameters": {
-        "model": "gemini-2.0-flash",
         "prompt": "={{ $json.body.userMessage }}",
-        "systemMessage": "You are a helpful healthcare assistant chatbot.\nUse the provided context to answer the user's question.\n\nIMPORTANT RULES:\n- You are NOT a doctor and cannot provide definitive diagnoses. Use phrases like \"possible\", \"may\", \"could be\".\n- For emergency symptoms, set urgency to \"high\" and strongly urge immediate emergency care.\n- Only suggest over-the-counter (OTC) medicines when appropriate. Never suggest controlled substances.\n\nRespond ONLY with valid JSON in this exact format:\n{\n  \"reply\": \"Your response\",\n  \"possibleCauses\": [\"cause1\", \"cause2\"],\n  \"medicineSuggestions\": [{ \"name\": \"Medicine name\", \"note\": \"Usage note\" }],\n  \"healthTips\": [\"tip1\", \"tip2\"],\n  \"urgency\": \"low|medium|high\",\n  \"recommendedSpecialty\": \"Specialty\"\n}",
         "options": {
-          "temperature": 0.3
+          "systemMessage": "You are Dr. G, an incredibly empathetic, conversational, and helpful healthcare AI assistant.\n\nIMPORTANT RULES:\n- Reply in a warm, conversational, and natural tone, exactly like a human doctor or ChatGPT.\n- If the user asks for \"nearby\" doctors, hospitals, specialists, or medical stores, politely ask them to provide their city, neighborhood, or zip code if they haven't.\n- You are NOT a human doctor. Use phrases like \"possible\", \"may\", \"could be\".\n- For emergency symptoms, strongly urge immediate emergency care and set urgency to \"high\".\n\nRespond ONLY with valid JSON in this exact format:\n{\n  \"reply\": \"Your warm, detailed response here.\",\n  \"possibleCauses\": [\"cause1\", \"cause2\"],\n  \"medicineSuggestions\": [{ \"name\": \"Medicine name\", \"note\": \"Usage note\" }],\n  \"healthTips\": [\"tip1\", \"tip2\"],\n  \"urgency\": \"low|medium|high\",\n  \"recommendedSpecialty\": \"Specialty\"\n}"
         }
       },
-      "id": "2",
-      "name": "Basic LLM Chain",
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.4,
-      "position": [ 500, 300 ]
+      "id": "agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [400, 600]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json.text }}",
+        "responseBody": "={{ $json.output || $json.text }}",
         "options": {}
       },
-      "id": "3",
+      "id": "respond_to_webhook",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [ 800, 300 ]
+      "position": [800, 600]
     },
     {
-      "parameters": {},
-      "id": "4",
-      "name": "In-Memory Vector Store",
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "parameters": {
+        "name": "medical_knowledge_base",
+        "description": "Call this tool to search the medical PDF document for symptoms, diseases, and medical recommendations."
+      },
+      "id": "tool_vector_store",
+      "name": "Query Data Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
       "typeVersion": 1,
-      "position": [ 500, 500 ]
+      "position": [600, 800]
+    },
+    {
+      "parameters": {
+        "model": "gemini-2.0-flash",
+        "options": {}
+      },
+      "id": "model_gemini",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [400, 800]
     },
     {
       "parameters": {
         "model": "models/embedding-001"
       },
-      "id": "5",
+      "id": "embeddings_gemini",
       "name": "Gemini Embeddings",
       "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
       "typeVersion": 1,
-      "position": [ 500, 700 ]
-    },
-    {
-      "parameters": {
-        "filePath": "c:/Users/dell/Desktop/Medical work/AI Powered Medical Recommendation Chatbot.pdf"
-      },
-      "id": "6",
-      "name": "Read PDF",
-      "type": "@n8n/n8n-nodes-langchain.documentPdf",
-      "typeVersion": 1,
-      "position": [ 700, 700 ]
+      "position": [250, 400]
     }
   ],
   "connections": {
-    "Webhook": {
+    "On clicking 'execute'": {
       "main": [
         [
           {
-            "node": "Basic LLM Chain",
+            "node": "Insert Data to Store",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Basic LLM Chain": {
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Data to Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Data to Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query Data Tool",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
       "main": [
         [
           {
@@ -94,43 +186,28 @@
         ]
       ]
     },
-    "In-Memory Vector Store": {
-      "ai_vectorStore": [
+    "Google Gemini Chat Model": {
+      "ai_model": [
         [
           {
-            "node": "Basic LLM Chain",
-            "type": "ai_vectorStore",
+            "node": "AI Agent",
+            "type": "ai_model",
             "index": 0
           }
         ]
       ]
     },
-    "Gemini Embeddings": {
-      "ai_embedding": [
+    "Query Data Tool": {
+      "ai_tool": [
         [
           {
-            "node": "In-Memory Vector Store",
-            "type": "ai_embedding",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read PDF": {
-      "ai_document": [
-        [
-          {
-            "node": "In-Memory Vector Store",
-            "type": "ai_document",
+            "node": "AI Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]
       ]
     }
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "2"
+  "settings": {}
 }

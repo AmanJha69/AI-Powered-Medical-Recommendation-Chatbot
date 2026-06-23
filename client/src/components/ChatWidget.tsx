@@ -115,7 +115,7 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
-        <div className="flex h-[600px] max-h-[80vh] w-[400px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5">
+        <div className="flex h-[600px] max-h-[80vh] w-[400px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-slate-800">
           {/* Header */}
           <div className="flex items-center justify-between bg-primary-600 px-4 py-3 text-white">
             <div className="flex items-center gap-2">
@@ -163,12 +163,12 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto bg-slate-50 p-4">
+          <div className="flex-1 overflow-y-auto bg-slate-50 p-4 dark:bg-slate-950">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="mb-4 text-4xl">👋</div>
-                <h4 className="font-semibold text-slate-800">Need Medical Advice?</h4>
-                <p className="mt-2 text-sm text-slate-500 mb-6">
+                <h4 className="font-semibold text-slate-800 dark:text-slate-100">Need Medical Advice?</h4>
+                <p className="mt-2 text-sm text-slate-500 mb-6 dark:text-slate-400">
                   I'm your personal AI health assistant. Ask me anything about your symptoms or medications.
                 </p>
                 <SymptomChips onSelect={handleSendWithChat} disabled={aiThinking} />
@@ -188,7 +188,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-slate-200 bg-white p-4">
+          <div className="border-t border-slate-200 bg-white p-0 dark:border-slate-800 dark:bg-slate-900">
             <ChatInput
               onSend={handleSendWithChat}
               onTypingStart={() => activeChatId && emitTypingStart(activeChatId)}

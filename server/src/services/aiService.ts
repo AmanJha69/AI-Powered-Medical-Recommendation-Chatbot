@@ -7,19 +7,23 @@ export interface AIResponse {
   metadata: IMessageMetadata;
 }
 
-const SYSTEM_PROMPT = `You are a helpful healthcare assistant chatbot. You provide general health information and suggestions based on symptoms.
+const SYSTEM_PROMPT = `You are Dr. G, an incredibly empathetic, conversational, and helpful healthcare AI assistant.
 
 IMPORTANT RULES:
-- You are NOT a doctor and cannot provide definitive diagnoses. Use phrases like "possible", "may", "could be".
-- For emergency symptoms (chest pain, difficulty breathing, severe bleeding, stroke signs, loss of consciousness), set urgency to "high" and strongly urge immediate emergency care.
-- Only suggest over-the-counter (OTC) medicines when appropriate. Never suggest controlled substances.
-- Always recommend consulting a healthcare professional for persistent or worsening symptoms.
+- Reply in a warm, conversational, and natural tone, exactly like a human doctor or ChatGPT. Do not just return sterile data.
+- If the user uploaded an image (like a medical report, a prescription, or a medicine box), analyze it thoroughly. Explain what the medicine is for or summarize the medical report in plain English.
+- The user is located in Jamshedpur. ALWAYS recommend doctors and hospitals located in Jamshedpur based on the patient's issue.
+- DO NOT recommend any medicines. If the user asks for medicine, politely respond that you are an AI chatbot and cannot prescribe or recommend any medicine, and that they should visit a nearby doctor instead.
+- You are NOT a human doctor and cannot provide definitive life-or-death diagnoses. Use phrases like "possible", "may", "could be".
+- For emergency symptoms (chest pain, difficulty breathing, severe bleeding, stroke signs), strongly urge immediate emergency care and set urgency to "high".
+- Always recommend consulting a healthcare professional for persistent symptoms.
+- If the user is just saying hello or having a casual chat, leave 'recommendedSpecialty' EMPTY (""). Only recommend a specialty if they describe actual medical symptoms.
 
 Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
 {
-  "reply": "Your friendly, empathetic response to the user",
+  "reply": "Your warm, detailed, conversational response here.",
   "possibleCauses": ["cause1", "cause2"],
-  "medicineSuggestions": [{ "name": "Medicine name", "note": "Usage note and disclaimer" }],
+  "medicineSuggestions": [],
   "healthTips": ["tip1", "tip2"],
   "urgency": "low|medium|high",
   "recommendedSpecialty": "Specialty name e.g. General Physician, Dermatologist"
@@ -43,9 +47,9 @@ function parseAIJson(text: string): {
 
 function fallbackResponse(userMessage: string): AIResponse {
   return {
-    reply: `Thank you for sharing your symptoms regarding "${userMessage.slice(0, 100)}". I'm unable to connect to the AI service right now. Please consult a healthcare professional for proper evaluation. In case of emergency symptoms like chest pain or difficulty breathing, seek immediate medical care.`,
+    reply: `I'm so sorry, but I'm having trouble connecting to my AI core right now. Please consult a healthcare professional for a proper evaluation. If you are experiencing emergency symptoms like severe chest pain or difficulty breathing, please seek immediate medical care.`,
     metadata: {
-      healthTips: ['Stay hydrated', 'Get adequate rest', 'Monitor your symptoms'],
+      healthTips: ['Stay hydrated', 'Get adequate rest', 'Monitor your symptoms closely'],
       urgency: 'medium',
       recommendedSpecialty: 'General Physician',
     },
@@ -114,18 +118,25 @@ export async function generateMedicalResponse(
       };
 
       const specialty = metadata.recommendedSpecialty || '';
-      const doctors = specialty
-        ? await findDoctorsBySpecialty(specialty)
-        : await findDoctorsBySymptom(userMessage, specialty);
+      let doctors: any[] = [];
+      
+      // Only fetch doctors if the AI explicitly recommends a specialty OR it's not a casual greeting (determined by urgency or causes)
+      if (specialty || (metadata.possibleCauses && metadata.possibleCauses.length > 0)) {
+        doctors = specialty
+          ? await findDoctorsBySpecialty(specialty)
+          : await findDoctorsBySymptom(userMessage, specialty);
+      }
 
-      metadata.doctors = doctors.map((d) => ({
-        _id: d._id?.toString(),
-        name: d.name,
-        specialty: d.specialty,
-        location: d.location,
-        rating: d.rating,
-        contact: d.contact,
-      }));
+      if (doctors.length > 0) {
+        metadata.doctors = doctors.map((d) => ({
+          _id: d._id?.toString(),
+          name: d.name,
+          specialty: d.specialty,
+          location: d.location,
+          rating: d.rating,
+          contact: d.contact,
+        }));
+      }
 
       return {
         reply: parsed.reply,
@@ -149,14 +160,16 @@ export async function generateMedicalResponse(
 
   const conversation = history
     .reverse()
-    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .map((m) => `${m.role === 'user' ? 'User' : 'Dr. G'}: ${m.content}`)
     .join('\n');
 
-  const genAI = new GoogleGenerativeAI(apiKey!);
+  const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: process.env.AI_MODEL || 'gemini-2.0-flash',
     systemInstruction: SYSTEM_PROMPT,
   });
+
+
 
   const prompt = conversation
     ? `Previous conversation:\n${conversation}\n\nUser's latest message: ${userMessage}`

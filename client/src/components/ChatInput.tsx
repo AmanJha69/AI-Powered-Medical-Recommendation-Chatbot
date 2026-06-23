@@ -33,13 +33,14 @@ export default function ChatInput({
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
+    
     onSend(trimmed);
     setValue('');
     onTypingStop();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-4">
+    <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex gap-2">
         <input
           type="text"
@@ -47,12 +48,12 @@ export default function ChatInput({
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Describe your symptoms..."
           disabled={disabled}
-          className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 disabled:opacity-50"
+          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900"
         />
         <button
           type="submit"
           disabled={disabled || !value.trim()}
-          className="rounded-xl bg-primary-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+          className="rounded-xl bg-primary-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-600 dark:hover:bg-primary-500"
         >
           Send
         </button>
