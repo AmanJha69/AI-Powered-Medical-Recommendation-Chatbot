@@ -146,7 +146,7 @@ const jamshedpurDoctors = [
   // Orthopedics
   {
     name: "Dr. Ravi Ranjan",
-    specialty: "Orthopedic",
+    specialty: "Orthopedist",
     location: "Tinplate Hospital, Golmuri, Jamshedpur",
     rating: 4.6,
     contact: "+91-657-2341234",
@@ -158,7 +158,7 @@ const jamshedpurDoctors = [
   },
   {
     name: "Dr. A. Bera",
-    specialty: "Orthopedic",
+    specialty: "Orthopedist",
     location: "Tata Main Hospital (TMH), Bistupur, Jamshedpur",
     rating: 4.7,
     contact: "+91-657-6641111",

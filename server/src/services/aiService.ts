@@ -17,29 +17,41 @@ IMPORTANT RULES:
 - You are NOT a human doctor and cannot provide definitive life-or-death diagnoses. Use phrases like "possible", "may", "could be".
 - For emergency symptoms (chest pain, difficulty breathing, severe bleeding, stroke signs), strongly urge immediate emergency care and set urgency to "high".
 - Always recommend consulting a healthcare professional for persistent symptoms.
+- If the user asks about ANYTHING unrelated to health, medicine, wellness, or their body (e.g., cricket, sports, politics, movies, programming), politely but firmly refuse to answer. Say: "I am Dr. G, a dedicated medical chatbot. I can only assist you with health, symptoms, and medical-related inquiries." Do NOT attempt to answer the non-medical question under any circumstances.
 - If the user is just saying hello or having a casual chat, leave 'recommendedSpecialty' EMPTY (""). Only recommend a specialty if they describe actual medical symptoms.
+- CRITICAL: You are NOT allowed to prescribe, recommend, or suggest ANY specific medicines or drugs. Always tell the user to consult a doctor for medication.
 
 Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
 {
-  "reply": "Your warm, detailed, conversational response here.",
-  "possibleCauses": ["cause1", "cause2"],
-  "medicineSuggestions": [],
-  "healthTips": ["tip1", "tip2"],
-  "urgency": "low|medium|high",
-  "recommendedSpecialty": "Specialty name e.g. General Physician, Dermatologist"
+  "reply": "Conversational, empathetic response...",
+  "possibleCauses": ["List", "of", "possible", "conditions"],
+  "healthTips": ["List", "of", "home", "remedies", "or", "tips"],
+  "urgency": "low | medium | high",
+  "recommendedSpecialty": "Matching doctor specialty (e.g., General Physician, Cardiologist, Dermatologist, Pediatrician, Psychiatrist, Orthopedist, Gastroenterologist)"
 }`;
 
 function parseAIJson(text: string): {
   reply?: string;
   possibleCauses?: string[];
-  medicineSuggestions?: { name: string; note: string }[];
   healthTips?: string[];
   urgency?: 'low' | 'medium' | 'high';
   recommendedSpecialty?: string;
 } | null {
   try {
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    return JSON.parse(cleaned);
+    const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+    
+    // 1. Try to parse the entire cleaned string
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // 2. Fallback: LLMs sometimes add conversational text before the JSON block.
+      // Extract everything from the first '{' to the last '}'.
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      return null;
+    }
   } catch {
     return null;
   }

@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ChatPage from './pages/ChatPage';
+import AppointmentsPage from './pages/AppointmentsPage';
 import ChatWidget from './components/ChatWidget';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -58,6 +59,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ChatPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/appointments"
+              element={
+                <ProtectedRoute>
+                  <AppointmentsPage />
                 </ProtectedRoute>
               }
             />

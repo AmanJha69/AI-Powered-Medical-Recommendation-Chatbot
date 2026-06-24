@@ -145,13 +145,22 @@ export default function ChatPage() {
             <p className="text-xs text-slate-500 dark:text-slate-400">Hello, {user?.name}</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="rounded-lg px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/appointments')}
+            className="rounded-lg px-3 py-1.5 text-sm font-semibold text-primary-600 transition hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/30"
+          >
+            My Appointments
+          </button>
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded-lg px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
