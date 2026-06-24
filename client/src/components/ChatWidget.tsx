@@ -11,7 +11,7 @@ import type { Chat, Message } from '../types';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [chats, setChats] = useState<Chat[]>([]);
+  const [, setChats] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [aiThinking, setAiThinking] = useState(false);

@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -23,55 +24,64 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute>
+              <AppointmentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <Toaster position="top-right" />
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/appointments"
-              element={
-                <ProtectedRoute>
-                  <AppointmentsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AnimatedRoutes />
           
           {/* ChatWidget is available globally but hidden on /chat via its own internal logic */}
           <ChatWidget />

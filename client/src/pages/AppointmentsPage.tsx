@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { appointmentApi } from '../services/api';
 import ThemeToggle from '../components/ThemeToggle';
 import type { DoctorRecommendation } from '../types';
@@ -34,7 +35,13 @@ export default function AppointmentsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden"
+    >
       <div className="fixed -left-[20%] top-0 h-[500px] w-[500px] rounded-full bg-primary-400/20 blur-[120px] mix-blend-multiply dark:bg-primary-900/20 dark:mix-blend-color pointer-events-none"></div>
       
       {/* Header */}
@@ -143,6 +150,6 @@ export default function AppointmentsPage() {
           </div>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 }

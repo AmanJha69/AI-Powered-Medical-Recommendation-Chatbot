@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { doctorApi } from '../services/api';
 import DisclaimerBanner from '../components/DisclaimerBanner';
@@ -16,7 +17,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorRecommendation | null>(null);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
-  const [selectedTip, setSelectedTip] = useState<{title: string, icon: string, description: string, details: string[]} | null>(null);
+  const [selectedTip, setSelectedTip] = useState<{title: string, icon: string, description: string, details: string[], color?: string, hoverColor?: string} | null>(null);
   const [showAllDoctors, setShowAllDoctors] = useState(false);
 
   useEffect(() => {
@@ -131,7 +132,13 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden"
+    >
       {/* Background blobs for overall page depth */}
       <div className="fixed -left-[20%] top-0 h-[500px] w-[500px] rounded-full bg-primary-400/20 blur-[120px] mix-blend-multiply dark:bg-primary-900/20 dark:mix-blend-color pointer-events-none"></div>
       <div className="fixed -right-[20%] top-[40%] h-[600px] w-[600px] rounded-full bg-amber-400/20 blur-[120px] mix-blend-multiply dark:bg-amber-900/20 dark:mix-blend-color pointer-events-none"></div>
@@ -390,6 +397,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { chatApi } from '../services/api';
 import { useSocket } from '../hooks/useSocket';
@@ -120,7 +121,13 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.3 }}
+      className="flex h-screen flex-col bg-slate-50 transition-colors duration-300 dark:bg-slate-950"
+    >
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <button
@@ -230,6 +237,6 @@ export default function ChatPage() {
           )}
         </main>
       </div>
-    </div>
+    </motion.div>
   );
 }
