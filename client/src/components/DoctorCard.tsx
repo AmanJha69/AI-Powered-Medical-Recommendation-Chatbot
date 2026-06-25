@@ -1,13 +1,18 @@
 import type { DoctorRecommendation } from '../types';
+import { motion } from 'framer-motion';
 
 interface DoctorCardProps {
   doctor: DoctorRecommendation;
   onClick?: () => void;
+  index?: number;
 }
 
-export default function DoctorCard({ doctor, onClick }: DoctorCardProps) {
+export default function DoctorCard({ doctor, onClick, index = 0 }: DoctorCardProps) {
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1, ease: 'easeOut' }}
       onClick={onClick}
       className="group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary-500/10 dark:border-slate-800/50 dark:bg-slate-900/80 dark:hover:border-primary-500/30"
     >
@@ -49,15 +54,17 @@ export default function DoctorCard({ doctor, onClick }: DoctorCardProps) {
         </div>
       </div>
       
-      <button 
+      <motion.button 
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={(e) => {
           e.stopPropagation(); // don't trigger card click
           if (onClick) onClick();
         }}
-        className="relative z-10 mt-6 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-primary-600 hover:shadow-primary-600/30 dark:bg-slate-800 dark:hover:bg-primary-600"
+        className="relative z-10 mt-6 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-primary-600 hover:shadow-primary-600/30 dark:bg-slate-800 dark:hover:bg-primary-600"
       >
         Book Appointment
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }

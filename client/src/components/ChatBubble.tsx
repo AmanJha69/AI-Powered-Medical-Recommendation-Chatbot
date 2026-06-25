@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import type { Message, DoctorRecommendation } from '../types';
 import MedicineCard from './MedicineCard';
 import DoctorCard from './DoctorCard';
@@ -23,16 +24,24 @@ export default function ChatBubble({ message }: ChatBubbleProps) {
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-2xl rounded-br-md bg-primary-600 px-4 py-3 text-white shadow-sm">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="max-w-[80%] rounded-2xl rounded-br-md bg-primary-600 px-4 py-3 text-white shadow-sm"
+        >
           <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="flex justify-start">
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 10, originX: 0, originY: 1 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         className={`max-w-[85%] rounded-2xl rounded-bl-md border-l-4 bg-white px-4 py-3 shadow-sm dark:bg-slate-800 ${
           urgency ? urgencyStyles[urgency] : 'border-l-primary-400'
         }`}
@@ -91,7 +100,7 @@ export default function ChatBubble({ message }: ChatBubbleProps) {
             />
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

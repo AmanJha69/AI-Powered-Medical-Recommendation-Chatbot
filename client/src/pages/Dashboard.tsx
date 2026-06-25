@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { doctorApi } from '../services/api';
 import DisclaimerBanner from '../components/DisclaimerBanner';
@@ -254,38 +254,47 @@ export default function Dashboard() {
                 </button>
 
                 {/* Expanded Accordion for Doctors in this Specialty */}
-                {selectedSpecialty === category.name && (
-                  <div className="col-span-full overflow-hidden animate-in slide-in-from-top-8 fade-in duration-500">
-                    <div className="mt-2 mb-6 rounded-3xl border border-primary-100 bg-white/80 p-6 shadow-xl backdrop-blur-md dark:border-primary-900/30 dark:bg-slate-900/80 sm:p-8">
-                      <div className="mb-6 flex items-center justify-between">
-                        <h4 className="text-xl font-bold text-slate-900 dark:text-white">
-                          Available {category.name}s
-                        </h4>
-                        <button 
-                          onClick={() => setSelectedSpecialty(null)}
-                          className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
-                        >
-                          ✕
-                        </button>
+                <AnimatePresence>
+                  {selectedSpecialty === category.name && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="col-span-full overflow-hidden"
+                    >
+                      <div className="mt-2 mb-6 rounded-3xl border border-primary-100 bg-white/80 p-6 shadow-xl backdrop-blur-md dark:border-primary-900/30 dark:bg-slate-900/80 sm:p-8">
+                        <div className="mb-6 flex items-center justify-between">
+                          <h4 className="text-xl font-bold text-slate-900 dark:text-white">
+                            Available {category.name}s
+                          </h4>
+                          <button 
+                            onClick={() => setSelectedSpecialty(null)}
+                            className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                          {doctors.filter(d => d.specialty === category.name).length > 0 ? (
+                            doctors.filter(d => d.specialty === category.name).map((doctor, idx) => (
+                              <DoctorCard 
+                                key={doctor._id || doctor.name} 
+                                doctor={doctor} 
+                                index={idx}
+                                onClick={() => setSelectedDoctor(doctor)}
+                              />
+                            ))
+                          ) : (
+                            <div className="col-span-full py-8 text-center text-slate-500 dark:text-slate-400">
+                              No doctors found for this specialty right now.
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {doctors.filter(d => d.specialty === category.name).length > 0 ? (
-                          doctors.filter(d => d.specialty === category.name).map((doctor) => (
-                            <DoctorCard 
-                              key={doctor._id || doctor.name} 
-                              doctor={doctor} 
-                              onClick={() => setSelectedDoctor(doctor)}
-                            />
-                          ))
-                        ) : (
-                          <div className="col-span-full py-8 text-center text-slate-500 dark:text-slate-400">
-                            No doctors found for this specialty right now.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>
@@ -312,10 +321,11 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {(showAllDoctors ? doctors : doctors.slice(0, 8)).map((doctor) => (
+              {(showAllDoctors ? doctors : doctors.slice(0, 8)).map((doctor, idx) => (
                 <DoctorCard 
                   key={doctor._id || doctor.name} 
                   doctor={doctor} 
+                  index={idx}
                   onClick={() => setSelectedDoctor(doctor)}
                 />
               ))}

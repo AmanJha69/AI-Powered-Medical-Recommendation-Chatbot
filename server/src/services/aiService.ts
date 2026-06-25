@@ -81,16 +81,21 @@ export async function generateMedicalResponse(
   try {
     const cleanedMessage = userMessage.trim();
     // Only cache if the message is substantial enough (avoid caching 'hi' or single words blindly if needed, but for now we cache all)
-    const cachedUserMessage = await Message.findOne({
+    // Find matching user messages. The first one will always be the one we JUST inserted in chatController,
+    // so we need to grab the second most recent one.
+    const cachedUserMessages = await Message.find({
+      chatId, // Restrict to the current chat session to avoid context leakage!
       content: { $regex: new RegExp(`^${cleanedMessage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
       role: 'user'
-    }).sort({ createdAt: -1 }).lean();
+    }).sort({ createdAt: -1 }).limit(2).lean();
 
-    if (cachedUserMessage && cachedUserMessage.chatId) {
+    const olderUserMessage = cachedUserMessages.length > 1 ? cachedUserMessages[1] : null;
+
+    if (olderUserMessage && olderUserMessage.chatId) {
       const cachedAssistantMessage = await Message.findOne({
-        chatId: cachedUserMessage.chatId,
+        chatId: olderUserMessage.chatId,
         role: 'assistant',
-        createdAt: { $gt: cachedUserMessage.createdAt }
+        createdAt: { $gt: olderUserMessage.createdAt }
       }).sort({ createdAt: 1 }).lean();
 
       if (cachedAssistantMessage && cachedAssistantMessage.content) {
