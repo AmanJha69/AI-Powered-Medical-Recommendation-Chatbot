@@ -36,6 +36,7 @@ function parseAIJson(text: string): {
   healthTips?: string[];
   urgency?: 'low' | 'medium' | 'high';
   recommendedSpecialty?: string;
+  medicineSuggestions?: any[];
 } | null {
   try {
     const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
@@ -75,6 +76,35 @@ export async function generateMedicalResponse(
   const useN8n = process.env.USE_N8N === 'true';
   const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
   const apiKey = process.env.GEMINI_API_KEY;
+
+  // --- START OF CACHE LOGIC ---
+  try {
+    const cleanedMessage = userMessage.trim();
+    // Only cache if the message is substantial enough (avoid caching 'hi' or single words blindly if needed, but for now we cache all)
+    const cachedUserMessage = await Message.findOne({
+      content: { $regex: new RegExp(`^${cleanedMessage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+      role: 'user'
+    }).sort({ createdAt: -1 }).lean();
+
+    if (cachedUserMessage && cachedUserMessage.chatId) {
+      const cachedAssistantMessage = await Message.findOne({
+        chatId: cachedUserMessage.chatId,
+        role: 'assistant',
+        createdAt: { $gt: cachedUserMessage.createdAt }
+      }).sort({ createdAt: 1 }).lean();
+
+      if (cachedAssistantMessage && cachedAssistantMessage.content) {
+        console.log(`⚡ CACHE HIT: Returning cached response for "${cleanedMessage}"`);
+        return {
+          reply: cachedAssistantMessage.content,
+          metadata: cachedAssistantMessage.metadata as IMessageMetadata || { urgency: 'low' }
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Cache lookup error:', error);
+  }
+  // --- END OF CACHE LOGIC ---
 
   if (!useN8n && (!apiKey || apiKey === 'your_gemini_api_key_here')) {
     const doctors = await findDoctorsBySymptom(userMessage);
@@ -175,7 +205,7 @@ export async function generateMedicalResponse(
     .map((m) => `${m.role === 'user' ? 'User' : 'Dr. G'}: ${m.content}`)
     .join('\n');
 
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = new GoogleGenerativeAI(apiKey || '');
   const model = genAI.getGenerativeModel({
     model: process.env.AI_MODEL || 'gemini-2.0-flash',
     systemInstruction: SYSTEM_PROMPT,
