@@ -58,6 +58,19 @@ function parseAIJson(text: string): {
   }
 }
 
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
 function fallbackResponse(userMessage: string): AIResponse {
   return {
     reply: `I'm so sorry, but I'm having trouble connecting to my AI core right now. Please consult a healthcare professional for a proper evaluation. If you are experiencing emergency symptoms like severe chest pain or difficulty breathing, please seek immediate medical care.`,
@@ -71,29 +84,72 @@ function fallbackResponse(userMessage: string): AIResponse {
 
 export async function generateMedicalResponse(
   chatId: string,
-  userMessage: string
+  userMessage: string,
+  attachments?: any[]
 ): Promise<AIResponse> {
   const useN8n = process.env.USE_N8N === 'true';
   const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
   const apiKey = process.env.GEMINI_API_KEY;
 
   // --- START OF CACHE LOGIC ---
-  try {
-    const cleanedMessage = userMessage.trim();
-    // Only cache if the message is substantial enough (avoid caching 'hi' or single words blindly if needed, but for now we cache all)
-    // Find matching user messages. The first one will always be the one we JUST inserted in chatController,
-    // so we need to grab the second most recent one.
-    const cachedUserMessages = await Message.find({
-      chatId, // Restrict to the current chat session to avoid context leakage!
-      content: { $regex: new RegExp(`^${cleanedMessage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
-      role: 'user'
-    }).sort({ createdAt: -1 }).limit(2).lean();
+  if (!attachments || attachments.length === 0) {
+    try {
+      const cleanedMessage = userMessage.trim();
+    
+    // 1. Generate Embedding
+    let currentEmbedding: number[] | null = null;
+    if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await embeddingModel.embedContent(cleanedMessage);
+        currentEmbedding = result.embedding.values;
+        
+        // Update the recently inserted user message with its embedding
+        await Message.findOneAndUpdate(
+          { chatId, role: 'user' },
+          { embedding: currentEmbedding },
+          { sort: { createdAt: -1 } }
+        );
+      } catch (err) {
+        console.error('Failed to generate embedding:', err);
+      }
+    }
 
-    const olderUserMessage = cachedUserMessages.length > 1 ? cachedUserMessages[1] : null;
+    // 2. Semantic Search
+    let matchedOlderMessage = null;
 
-    if (olderUserMessage && olderUserMessage.chatId) {
+    if (currentEmbedding) {
+      // Find all PREVIOUS user messages in this chat with an embedding (skip the current one)
+      const previousUserMessages = await Message.find({
+        chatId,
+        role: 'user',
+        embedding: { $exists: true, $ne: [] }
+      }).sort({ createdAt: -1 }).skip(1).lean();
+
+      for (const msg of previousUserMessages) {
+        if (msg.embedding && msg.embedding.length > 0) {
+          const sim = cosineSimilarity(currentEmbedding, msg.embedding);
+          if (sim > 0.90) { // 90% semantic match threshold
+            matchedOlderMessage = msg;
+            console.log(`🧠 SEMANTIC CACHE HIT (${(sim*100).toFixed(1)}% match):\n  New: "${cleanedMessage}"\n  Old: "${msg.content}"`);
+            break;
+          }
+        }
+      }
+    } else {
+      // Fallback to exact regex match if embedding fails
+      const cachedUserMessages = await Message.find({
+        chatId,
+        content: { $regex: new RegExp(`^${cleanedMessage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        role: 'user'
+      }).sort({ createdAt: -1 }).limit(2).lean();
+      matchedOlderMessage = cachedUserMessages.length > 1 ? cachedUserMessages[1] : null;
+    }
+
+    if (matchedOlderMessage && matchedOlderMessage.chatId) {
       const cachedAssistantMessage = await Message.findOne({
-        chatId: olderUserMessage.chatId,
+        chatId: matchedOlderMessage.chatId,
         role: 'assistant',
         createdAt: { $gt: olderUserMessage.createdAt }
       }).sort({ createdAt: 1 }).lean();
@@ -108,6 +164,7 @@ export async function generateMedicalResponse(
     }
   } catch (error) {
     console.error('Cache lookup error:', error);
+  }
   }
   // --- END OF CACHE LOGIC ---
 
@@ -129,6 +186,71 @@ export async function generateMedicalResponse(
     .sort({ createdAt: -1 })
     .limit(10)
     .lean();
+
+  // If there are attachments, bypass n8n and use Gemini Vision directly
+  if (attachments && attachments.length > 0 && apiKey && apiKey !== 'your_gemini_api_key_here') {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      
+      const attachment = attachments[0];
+      const base64Data = attachment.data.split(',')[1];
+      
+      const imagePart = {
+        inlineData: {
+          data: base64Data,
+          mimeType: attachment.type
+        }
+      };
+      
+      const prompt = `${SYSTEM_PROMPT}\n\nPatient asks: ${userMessage || "Can you analyze this medical document/image for me?"}`;
+      
+      const result = await model.generateContent([prompt, imagePart]);
+      const text = result.response.text();
+      const parsed = parseAIJson(text);
+
+      if (!parsed?.reply) {
+        return {
+          reply: text,
+          metadata: { urgency: 'low' },
+        };
+      }
+      
+      const metadata: IMessageMetadata = {
+        possibleCauses: parsed.possibleCauses,
+        medicineSuggestions: parsed.medicineSuggestions,
+        healthTips: parsed.healthTips,
+        urgency: parsed.urgency || 'low',
+        recommendedSpecialty: parsed.recommendedSpecialty,
+      };
+
+      const specialty = metadata.recommendedSpecialty || '';
+      let doctors: any[] = [];
+      if (specialty || (metadata.possibleCauses && metadata.possibleCauses.length > 0)) {
+        doctors = specialty
+          ? await findDoctorsBySpecialty(specialty)
+          : await findDoctorsBySymptom(userMessage, specialty);
+      }
+
+      if (doctors.length > 0) {
+        metadata.doctors = doctors.map((d) => ({
+          _id: d._id?.toString(),
+          name: d.name,
+          specialty: d.specialty,
+          location: d.location,
+          rating: d.rating,
+          contact: d.contact,
+        }));
+      }
+
+      return {
+        reply: parsed.reply,
+        metadata,
+      };
+    } catch (error) {
+      console.error('Gemini Vision error:', error);
+    }
+  }
 
   if (useN8n && n8nWebhookUrl) {
     try {

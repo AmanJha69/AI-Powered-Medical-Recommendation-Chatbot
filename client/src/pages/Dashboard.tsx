@@ -316,7 +316,7 @@ export default function Dashboard() {
           {loading ? (
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-72 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                <div key={i} className="skeleton-loader h-72 rounded-2xl"></div>
               ))}
             </div>
           ) : (

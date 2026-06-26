@@ -79,7 +79,7 @@ export default function ChatWidget() {
     if (activeChatId && isOpen) joinChat(activeChatId);
   }, [activeChatId, joinChat, isOpen]);
 
-  const handleSendWithChat = async (content: string) => {
+  const handleSendWithChat = async (content: string, attachments?: any[]) => {
     let chatId = activeChatId;
     if (!chatId) {
       try {
@@ -93,7 +93,7 @@ export default function ChatWidget() {
         return;
       }
     }
-    sendMessage(chatId, content);
+    sendMessage(chatId, content, attachments);
   };
 
   const handleNewChat = async () => {

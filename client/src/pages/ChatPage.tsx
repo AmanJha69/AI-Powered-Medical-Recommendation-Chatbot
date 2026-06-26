@@ -103,7 +103,7 @@ export default function ChatPage() {
     }
   };
 
-  const handleSendWithChat = async (content: string) => {
+  const handleSendWithChat = async (content: string, attachments?: any[]) => {
     let chatId = activeChatId;
     if (!chatId) {
       try {
@@ -117,7 +117,7 @@ export default function ChatPage() {
         return;
       }
     }
-    sendMessage(chatId, content);
+    sendMessage(chatId, content, attachments);
   };
 
   return (

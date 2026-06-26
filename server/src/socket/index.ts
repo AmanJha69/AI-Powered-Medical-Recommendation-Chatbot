@@ -7,7 +7,12 @@ import { generateMedicalResponse } from '../services/aiService';
 
 const sendMessageSchema = z.object({
   chatId: z.string(),
-  content: z.string().min(1).max(2000),
+  content: z.string().max(2000).optional().default(''),
+  attachments: z.array(z.object({
+    name: z.string(),
+    type: z.string(),
+    data: z.string() // Base64
+  })).optional()
 });
 
 export function setupSocket(io: Server): void {
@@ -57,7 +62,11 @@ export function setupSocket(io: Server): void {
         return;
       }
 
-      const { chatId, content } = parsed.data;
+      const { chatId, content, attachments } = parsed.data;
+      if (!content && (!attachments || attachments.length === 0)) {
+        socket.emit('error', { message: 'Message cannot be empty' });
+        return;
+      }
 
       try {
         const chat = await Chat.findOne({ _id: chatId, userId });
@@ -71,6 +80,7 @@ export function setupSocket(io: Server): void {
           userId,
           role: 'user',
           content,
+          attachments,
         });
 
         if (chat.title === 'New chat') {
@@ -86,7 +96,7 @@ export function setupSocket(io: Server): void {
 
         io.to(`chat:${chatId}`).emit('ai_thinking', { chatId, thinking: true });
 
-        const aiResult = await generateMedicalResponse(chatId, content);
+        const aiResult = await generateMedicalResponse(chatId, content, attachments);
 
         const assistantMessage = await Message.create({
           chatId: chat._id,

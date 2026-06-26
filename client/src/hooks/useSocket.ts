@@ -61,9 +61,9 @@ export function useSocket(options: UseSocketOptions = {}) {
     getSocket(token).emit('join_chat', chatId);
   };
 
-  const sendMessage = (chatId: string, content: string) => {
+  const sendMessage = (chatId: string, content: string, attachments?: any[]) => {
     if (!token) return;
-    getSocket(token).emit('send_message', { chatId, content });
+    getSocket(token).emit('send_message', { chatId, content, attachments });
   };
 
   const emitTypingStart = (chatId: string) => {

@@ -36,6 +36,7 @@ export interface IMessage extends Document {
   content: string;
   attachments?: IAttachment[];
   metadata?: IMessageMetadata;
+  embedding?: number[];
   createdAt: Date;
 }
 
@@ -53,6 +54,7 @@ const messageSchema = new Schema<IMessage>(
     content: { type: String, required: true },
     attachments: [attachmentSchema],
     metadata: { type: Schema.Types.Mixed },
+    embedding: { type: [Number], index: false },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

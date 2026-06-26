@@ -73,7 +73,7 @@ export default function AppointmentsPage() {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+              <div key={i} className="skeleton-loader h-32 rounded-2xl"></div>
             ))}
           </div>
         ) : appointments.length === 0 ? (

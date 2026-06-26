@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Message, DoctorRecommendation } from '../types';
 import MedicineCard from './MedicineCard';
 import DoctorCard from './DoctorCard';
@@ -30,7 +32,18 @@ export default function ChatBubble({ message }: ChatBubbleProps) {
           transition={{ type: 'spring', stiffness: 260, damping: 20 }}
           className="max-w-[80%] rounded-2xl rounded-br-md bg-primary-600 px-4 py-3 text-white shadow-sm"
         >
-          <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mb-2 max-w-sm overflow-hidden rounded-lg border border-primary-400 bg-primary-700/50">
+              {message.attachments[0].type.startsWith('image/') ? (
+                <img src={message.attachments[0].data} alt="Attachment" className="h-auto w-full max-h-64 object-contain" />
+              ) : (
+                <div className="p-3 text-sm font-medium">📄 {message.attachments[0].name}</div>
+              )}
+            </div>
+          )}
+          <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+          </div>
         </motion.div>
       </div>
     );
@@ -51,7 +64,9 @@ export default function ChatBubble({ message }: ChatBubbleProps) {
             Urgent: Please seek immediate medical attention if symptoms are severe.
           </div>
         )}
-        <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">{message.content}</p>
+        <div className="prose prose-sm max-w-none whitespace-pre-wrap text-slate-700 dark:prose-invert dark:text-slate-200">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+        </div>
 
         {message.metadata?.possibleCauses && message.metadata.possibleCauses.length > 0 && (
           <div className="mt-3">
