@@ -25,6 +25,18 @@ export async function bookAppointment(req: AuthRequest, res: Response): Promise<
       return;
     }
 
+    const existingAppointment = await Appointment.findOne({
+      doctorId,
+      date,
+      time,
+      status: { $in: ['confirmed', 'pending'] }
+    });
+
+    if (existingAppointment) {
+      res.status(409).json({ message: 'This time slot is already booked for this doctor' });
+      return;
+    }
+
     const appointment = new Appointment({
       userId,
       doctorId,
@@ -118,6 +130,19 @@ export async function rescheduleAppointment(req: AuthRequest, res: Response): Pr
     const appointment = await Appointment.findOne({ _id: id, userId: req.userId });
     if (!appointment) {
       res.status(404).json({ message: 'Appointment not found' });
+      return;
+    }
+
+    const existingAppointment = await Appointment.findOne({
+      doctorId: appointment.doctorId,
+      date,
+      time,
+      status: { $in: ['confirmed', 'pending'] },
+      _id: { $ne: id }
+    });
+
+    if (existingAppointment) {
+      res.status(409).json({ message: 'This time slot is already booked for this doctor' });
       return;
     }
 
