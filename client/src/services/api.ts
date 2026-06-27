@@ -41,6 +41,8 @@ export const appointmentApi = {
   book: (data: { doctorId: string; date: string; time: string }) => 
     api.post('/appointments', data),
   list: () => api.get('/appointments'),
+  cancel: (id: string) => api.delete(`/appointments/${id}`),
+  reschedule: (id: string, data: { date: string; time: string }) => api.put(`/appointments/${id}`, data),
 };
 
 export default api;

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Clock, MapPin, Phone, ArrowLeft, MoreVertical, CheckCircle2, AlertCircle } from 'lucide-react';
 import { appointmentApi } from '../services/api';
 import ThemeToggle from '../components/ThemeToggle';
+import RescheduleModal from '../components/RescheduleModal';
 import type { DoctorRecommendation } from '../types';
 import toast from 'react-hot-toast';
 
@@ -19,42 +21,51 @@ export default function AppointmentsPage() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+
+  const fetchAppointments = async () => {
+    try {
+      const { data } = await appointmentApi.list();
+      setAppointments(data);
+    } catch {
+      toast.error('Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const { data } = await appointmentApi.list();
-        setAppointments(data);
-      } catch {
-        toast.error('Failed to load appointments');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAppointments();
   }, []);
 
+  const handleCancel = async (id: string) => {
+    try {
+      await appointmentApi.cancel(id);
+      toast.success('Appointment cancelled successfully');
+      fetchAppointments();
+    } catch {
+      toast.error('Failed to cancel appointment');
+    }
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden"
     >
       <div className="fixed -left-[20%] top-0 h-[500px] w-[500px] rounded-full bg-primary-400/20 blur-[120px] mix-blend-multiply dark:bg-primary-900/20 dark:mix-blend-color pointer-events-none"></div>
+      <div className="fixed -right-[20%] bottom-0 h-[500px] w-[500px] rounded-full bg-indigo-400/20 blur-[120px] mix-blend-multiply dark:bg-indigo-900/20 dark:mix-blend-color pointer-events-none"></div>
       
-      {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-slate-200/50 glass-panel">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate('/')}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">My Appointments</h1>
           </div>
@@ -62,94 +73,145 @@ export default function AppointmentsPage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Your Booking History</h2>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">View and manage your upcoming and past consultations.</p>
-          </div>
+      <main className="relative z-10 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-10">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Your Consultations</h2>
+          <p className="mt-2 text-slate-600 dark:text-slate-400 font-medium">Manage your upcoming and past medical appointments securely.</p>
         </div>
 
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton-loader h-32 rounded-2xl"></div>
+              <div key={i} className="skeleton-loader h-48 rounded-3xl"></div>
             ))}
           </div>
         ) : appointments.length === 0 ? (
-          <div className="mt-12 rounded-[2rem] border border-slate-200 bg-white/50 p-12 text-center backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary-100 text-5xl dark:bg-primary-900/30">
-              📅
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mt-12 rounded-[2rem] border border-slate-200 bg-white/50 p-12 text-center backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50 shadow-xl shadow-slate-200/50 dark:shadow-none"
+          >
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary-100 text-primary-500 dark:bg-primary-900/30">
+              <Calendar className="h-10 w-10" />
             </div>
-            <h3 className="mt-6 text-xl font-bold text-slate-900 dark:text-white">No Appointments Yet</h3>
+            <h3 className="mt-6 text-2xl font-bold text-slate-900 dark:text-white">No Appointments Yet</h3>
             <p className="mt-2 text-slate-600 dark:text-slate-400">You haven't booked any consultations with our doctors yet.</p>
             <button 
               onClick={() => navigate('/')}
-              className="mt-8 rounded-xl bg-primary-600 px-8 py-3 text-sm font-bold tracking-wide text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-primary-600/40"
+              className="mt-8 rounded-2xl bg-primary-600 px-8 py-3 text-sm font-bold tracking-wide text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-primary-600/40"
             >
               Book an Appointment
             </button>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-6">
-            {appointments.map((apt) => (
-              <div 
-                key={apt._id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-              >
-                <div className="flex flex-col sm:flex-row">
-                  <div className="flex flex-1 flex-col justify-between p-6">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                          {apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
-                        </span>
-                        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                          Booked on {new Date(apt.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="mt-4">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{apt.doctorId?.name || 'Unknown Doctor'}</h3>
-                        <p className="text-sm font-medium text-primary-600 dark:text-primary-400">{apt.doctorId?.specialty || 'General'}</p>
-                      </div>
-                      <div className="mt-4 flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
-                        <div className="flex items-center gap-1.5">
-                          <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          {apt.doctorId?.location || 'Clinic'}
+            <AnimatePresence>
+              {appointments.map((apt, i) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  key={apt._id}
+                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/50 transition-all hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:shadow-none relative"
+                >
+                  <div className="absolute top-0 right-0 h-full w-2 bg-primary-500"></div>
+                  <div className="flex flex-col sm:flex-row">
+                    <div className="flex flex-1 flex-col justify-between p-8">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                            apt.status === 'cancelled' 
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
+                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          }`}>
+                            {apt.status === 'cancelled' ? <AlertCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                            {apt.status}
+                          </span>
+                          <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                            <MoreVertical className="h-5 w-5" />
+                          </button>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                          {apt.doctorId?.contact || 'N/A'}
+                        <div className="mt-6 flex items-start gap-5">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">
+                            <Calendar className="h-8 w-8" />
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{apt.doctorId?.name || 'Unknown Doctor'}</h3>
+                            <p className="text-sm font-bold text-primary-600 dark:text-primary-400 mt-1">{apt.doctorId?.specialty || 'General'}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
+                          <div className="flex items-center gap-2 font-medium">
+                            <div className="rounded-lg bg-slate-100 p-2 dark:bg-slate-800">
+                              <MapPin className="h-4 w-4 text-slate-500" />
+                            </div>
+                            {apt.doctorId?.location || 'Clinic'}
+                          </div>
+                          <div className="flex items-center gap-2 font-medium">
+                            <div className="rounded-lg bg-slate-100 p-2 dark:bg-slate-800">
+                              <Phone className="h-4 w-4 text-slate-500" />
+                            </div>
+                            {apt.doctorId?.contact || 'N/A'}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col justify-center border-t border-slate-100 bg-slate-50 p-6 sm:w-64 sm:border-l sm:border-t-0 dark:border-slate-800 dark:bg-slate-800/50">
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Date & Time</div>
-                      <div className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
-                        {apt.date}
+                    
+                    <div className="flex flex-col justify-center border-t border-slate-100 bg-slate-50 p-8 sm:w-72 sm:border-l sm:border-t-0 dark:border-slate-800 dark:bg-slate-800/50">
+                      <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-700">
+                        <div className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                          <Clock className="h-4 w-4 text-primary-500" /> Date & Time
+                        </div>
+                        <div className="text-lg font-black text-slate-900 dark:text-white">
+                          {apt.date}
+                        </div>
+                        <div className="text-md font-bold text-primary-600 dark:text-primary-400 mt-1">
+                          {apt.time}
+                        </div>
                       </div>
-                      <div className="text-md font-medium text-primary-600 dark:text-primary-400">
-                        {apt.time}
+                      
+                      <div className="mt-4 flex items-center justify-between px-2">
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Consultation Fee</div>
+                        <div className="text-xl font-black text-slate-900 dark:text-white">₹{apt.doctorId?.fee || 500}</div>
                       </div>
-                      <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
-                        <div className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Consultation Fee</div>
-                        <div className="mt-1 text-xl font-bold text-slate-900 dark:text-white">₹{apt.doctorId?.fee || 500}</div>
+                      
+                      <div className="mt-6 flex flex-col gap-3">
+                        {apt.status !== 'cancelled' && (
+                          <button 
+                            onClick={() => setRescheduleId(apt._id)}
+                            className="w-full rounded-xl border-2 border-slate-200 bg-transparent py-3 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+                          >
+                            Reschedule
+                          </button>
+                        )}
+                        {apt.status !== 'cancelled' && (
+                          <button 
+                            onClick={() => handleCancel(apt._id)}
+                            className="w-full rounded-xl bg-red-50 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                          >
+                            Cancel Appointment
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </main>
+
+      <RescheduleModal 
+        appointmentId={rescheduleId} 
+        onClose={(didReschedule) => {
+          setRescheduleId(null);
+          if (didReschedule) {
+            fetchAppointments();
+          }
+        }} 
+      />
     </motion.div>
   );
 }

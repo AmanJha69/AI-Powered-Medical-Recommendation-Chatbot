@@ -74,3 +74,61 @@ export async function getUserAppointments(req: AuthRequest, res: Response): Prom
     res.status(500).json({ message: 'Failed to fetch appointments' });
   }
 }
+
+export async function cancelAppointment(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    
+    if (!req.userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const appointment = await Appointment.findOne({ _id: id, userId: req.userId });
+    if (!appointment) {
+      res.status(404).json({ message: 'Appointment not found' });
+      return;
+    }
+
+    appointment.status = 'cancelled';
+    await appointment.save();
+
+    res.json({ message: 'Appointment cancelled successfully', appointment });
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    res.status(500).json({ message: 'Failed to cancel appointment' });
+  }
+}
+
+export async function rescheduleAppointment(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { date, time } = req.body;
+    
+    if (!req.userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    if (!date || !time) {
+      res.status(400).json({ message: 'Date and time are required' });
+      return;
+    }
+
+    const appointment = await Appointment.findOne({ _id: id, userId: req.userId });
+    if (!appointment) {
+      res.status(404).json({ message: 'Appointment not found' });
+      return;
+    }
+
+    appointment.date = date;
+    appointment.time = time;
+    appointment.status = 'confirmed'; // Reset to confirmed if it was somehow cancelled
+    await appointment.save();
+
+    res.json({ message: 'Appointment rescheduled successfully', appointment });
+  } catch (error) {
+    console.error('Error rescheduling appointment:', error);
+    res.status(500).json({ message: 'Failed to reschedule appointment' });
+  }
+}

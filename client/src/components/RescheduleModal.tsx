@@ -2,23 +2,22 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { format, addDays, isSameDay } from 'date-fns';
-import { MapPin, Phone, Star, Clock, CalendarCheck, CheckCircle2, ChevronRight, X, User as UserIcon, Wallet } from 'lucide-react';
+import { CalendarCheck, Clock, CheckCircle2, X } from 'lucide-react';
 import { appointmentApi } from '../services/api';
-import type { DoctorRecommendation } from '../types';
 
-interface DoctorModalProps {
-  doctor: DoctorRecommendation | null;
-  onClose: () => void;
+interface RescheduleModalProps {
+  appointmentId: string | null;
+  onClose: (didReschedule?: boolean) => void;
 }
 
-export default function DoctorModal({ doctor, onClose }: DoctorModalProps) {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+export default function RescheduleModal({ appointmentId, onClose }: RescheduleModalProps) {
+  const [step, setStep] = useState<1 | 2>(1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (doctor) {
+    if (appointmentId) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -26,28 +25,25 @@ export default function DoctorModal({ doctor, onClose }: DoctorModalProps) {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [doctor]);
+  }, [appointmentId]);
 
-  if (!doctor) return null;
+  if (!appointmentId) return null;
 
-  // Generate next 30 days for the date picker
   const upcomingDates = Array.from({ length: 30 }, (_, i) => addDays(new Date(), i));
-  
   const timeSlots = [
     '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
     '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM',
     '05:00 PM', '05:30 PM', '06:00 PM'
   ];
 
-  const handleBook = async () => {
+  const handleReschedule = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error('Please select both date and time');
       return;
     }
     try {
       setLoading(true);
-      await appointmentApi.book({
-        doctorId: doctor._id!,
+      await appointmentApi.reschedule(appointmentId, {
         date: format(selectedDate, 'yyyy-MM-dd'),
         time: selectedTime,
       });
@@ -56,30 +52,30 @@ export default function DoctorModal({ doctor, onClose }: DoctorModalProps) {
       const message =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : 'Failed to book appointment';
-      toast.error(message || 'Failed to book appointment');
+          : 'Failed to reschedule appointment';
+      toast.error(message || 'Failed to reschedule appointment');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetAndClose = () => {
-    setStep(0);
+  const resetAndClose = (didReschedule = false) => {
+    setStep(1);
     setSelectedDate(null);
     setSelectedTime('');
-    onClose();
+    onClose(didReschedule);
   };
 
   return (
     <AnimatePresence>
-      {doctor && (
+      {appointmentId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            onClick={resetAndClose}
+            onClick={() => resetAndClose(false)}
           />
           
           <motion.div 
@@ -90,122 +86,30 @@ export default function DoctorModal({ doctor, onClose }: DoctorModalProps) {
             className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/5 dark:bg-slate-900 dark:ring-slate-800"
           >
             <div className="absolute right-4 top-4 z-20 flex gap-2">
-              {step === 1 && (
-                <button 
-                  onClick={() => setStep(0)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition hover:bg-white/30"
-                >
-                  <ChevronRight className="h-6 w-6 rotate-180" />
-                </button>
-              )}
               <button 
-                onClick={resetAndClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md transition hover:bg-white/30"
+                onClick={() => resetAndClose(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            <div className="relative h-48 bg-gradient-to-br from-primary-600 via-primary-500 to-indigo-600 overflow-hidden">
-              <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-              <div className="absolute -bottom-16 left-8 flex h-32 w-32 items-center justify-center rounded-full border-[6px] border-white bg-slate-50 shadow-xl dark:border-slate-900 dark:bg-slate-800">
-                <UserIcon className="h-16 w-16 text-primary-500/50" />
-              </div>
-            </div>
-
-            <div className="px-8 pb-8 pt-20 max-h-[70vh] overflow-y-auto">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{doctor.name}</h2>
-                  <p className="mt-1 text-lg font-medium text-primary-600 dark:text-primary-400 flex items-center gap-2">
-                    {doctor.specialty}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-amber-100/80 px-4 py-2 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  {doctor.rating.toFixed(1)} Rating
-                </div>
-              </div>
-
-              {step === 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="mt-8 space-y-8"
-                >
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Contact & Location</h4>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                          <div className="rounded-xl bg-slate-100 p-3 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
-                            <MapPin className="h-5 w-5" />
-                          </div>
-                          <span className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
-                            {doctor.location}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="rounded-xl bg-slate-100 p-3 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
-                            <Phone className="h-5 w-5" />
-                          </div>
-                          <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">
-                            {doctor.contact}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">About Doctor</h4>
-                      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                        {doctor.about || `${doctor.name} is a highly respected ${doctor.specialty} committed to providing exceptional patient care.`}
-                      </p>
-                      
-                      <div className="mt-4 flex gap-3">
-                        <div className="flex-1 rounded-2xl bg-primary-50/50 p-4 text-center border border-primary-100 dark:border-primary-900/30 dark:bg-primary-900/10">
-                          <div className="text-2xl font-black text-primary-600 dark:text-primary-400">{doctor.experienceYears || 0}+</div>
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">Years Exp.</div>
-                        </div>
-                        <div className="flex-1 rounded-2xl bg-primary-50/50 p-4 text-center border border-primary-100 dark:border-primary-900/30 dark:bg-primary-900/10">
-                          <div className="text-2xl font-black text-primary-600 dark:text-primary-400">{(doctor.patientsCount && doctor.patientsCount >= 1000) ? `${(doctor.patientsCount / 1000).toFixed(1)}k+` : (doctor.patientsCount || 0)}</div>
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">Patients</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-6 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                        <Wallet className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold uppercase text-slate-500">Consultation Fee</div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">₹{doctor.fee || 500}</div>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setStep(1)}
-                      className="rounded-2xl bg-primary-600 px-8 py-4 text-sm font-bold tracking-wide text-white shadow-xl shadow-primary-500/20 transition-all hover:-translate-y-1 hover:bg-primary-700 hover:shadow-primary-600/40 active:scale-95 flex items-center gap-2"
-                    >
-                      Continue <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
+            <div className="px-8 pb-8 pt-12 max-h-[90vh] overflow-y-auto">
               {step === 1 && (
                 <motion.div 
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="mt-6 space-y-8"
+                  className="space-y-8"
                 >
+                  <div className="mb-2">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Reschedule Appointment</h2>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Choose a new date and time for your consultation.</p>
+                  </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
                       <CalendarCheck className="h-5 w-5 text-primary-500" /> Select Date
                     </h3>
-                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x custom-scrollbar">
                       {upcomingDates.map((d, i) => (
                         <button
                           key={i}
@@ -261,11 +165,11 @@ export default function DoctorModal({ doctor, onClose }: DoctorModalProps) {
 
                   <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                     <button 
-                      onClick={handleBook}
+                      onClick={handleReschedule}
                       disabled={loading || !selectedDate || !selectedTime}
                       className="w-full rounded-2xl bg-primary-600 px-4 py-4 text-base font-bold tracking-wide text-white shadow-xl shadow-primary-500/20 transition-all hover:-translate-y-1 hover:bg-primary-700 hover:shadow-primary-600/40 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                     >
-                      {loading ? 'Confirming Booking...' : 'Confirm Appointment'}
+                      {loading ? 'Rescheduling...' : 'Confirm New Time'}
                     </button>
                   </div>
                 </motion.div>
@@ -285,17 +189,17 @@ export default function DoctorModal({ doctor, onClose }: DoctorModalProps) {
                   >
                     <CheckCircle2 className="h-20 w-20 text-green-500" />
                   </motion.div>
-                  <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Booking Confirmed!</h3>
+                  <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Rescheduled!</h3>
                   <div className="mt-4 rounded-2xl bg-slate-50 p-6 border border-slate-100 dark:bg-slate-800/50 dark:border-slate-800">
                     <p className="text-slate-600 dark:text-slate-300 text-lg">
-                      Your appointment with <span className="font-bold text-slate-900 dark:text-white">{doctor.name}</span> is scheduled for:
+                      Your appointment is now scheduled for:
                     </p>
                     <div className="mt-4 text-2xl font-black text-primary-600 dark:text-primary-400">
                       {selectedDate && format(selectedDate, 'MMM do, yyyy')} at {selectedTime}
                     </div>
                   </div>
                   <button 
-                    onClick={resetAndClose}
+                    onClick={() => resetAndClose(true)}
                     className="mt-8 rounded-2xl bg-slate-900 px-10 py-4 text-sm font-bold text-white transition hover:bg-slate-800 hover:shadow-lg dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
                   >
                     Done
