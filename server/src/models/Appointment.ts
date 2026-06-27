@@ -5,7 +5,7 @@ export interface IAppointment extends Document {
   doctorId: mongoose.Types.ObjectId;
   date: string; // YYYY-MM-DD
   time: string; // HH:MM AM/PM
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,7 +18,7 @@ const appointmentSchema = new Schema<IAppointment>(
     time: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'cancelled'],
+      enum: ['pending', 'confirmed', 'cancelled', 'completed'],
       default: 'confirmed',
     },
   },

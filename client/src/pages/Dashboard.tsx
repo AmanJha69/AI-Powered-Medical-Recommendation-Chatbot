@@ -137,22 +137,25 @@ export default function Dashboard() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden"
+      className="min-h-screen bg-[#f8fafd] transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden"
     >
-      {/* Background blobs for overall page depth */}
-      <div className="fixed -left-[20%] top-0 h-[500px] w-[500px] rounded-full bg-primary-400/20 blur-[120px] mix-blend-multiply dark:bg-primary-900/20 dark:mix-blend-color pointer-events-none"></div>
-      <div className="fixed -right-[20%] top-[40%] h-[600px] w-[600px] rounded-full bg-amber-400/20 blur-[120px] mix-blend-multiply dark:bg-amber-900/20 dark:mix-blend-color pointer-events-none"></div>
+      {/* Premium Pillio Abstract Background */}
+      <div className="absolute inset-0 z-0 opacity-50 dark:opacity-20 pointer-events-none fixed">
+        <img src="/pillio-bg.png" alt="abstract background" className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-lighten" />
+      </div>
+      <div className="fixed -left-[20%] top-0 h-[500px] w-[500px] rounded-full bg-primary-400/10 blur-[120px] mix-blend-multiply dark:bg-primary-900/20 dark:mix-blend-color pointer-events-none"></div>
+      <div className="fixed -right-[20%] top-[40%] h-[600px] w-[600px] rounded-full bg-teal-400/10 blur-[120px] mix-blend-multiply dark:bg-teal-900/20 dark:mix-blend-color pointer-events-none"></div>
 
       <DisclaimerBanner />
       
       {/* Navbar */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-200/50 glass-panel">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <header className="relative z-40 mx-4 md:mx-auto max-w-7xl mt-4">
+        <div className="glass-panel rounded-[32px] px-6 py-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-lg shadow-primary-500/30 dark:from-primary-600 dark:to-primary-800">
-              <span className="text-2xl font-bold">+</span>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-md border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
+              <span className="text-2xl font-bold">🏥</span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Dr. G</h1>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Dr. G</h1>
           </div>
           
           <div className="flex items-center gap-4">
@@ -162,13 +165,13 @@ export default function Dashboard() {
             </span>
             <button
               onClick={() => navigate('/appointments')}
-              className="rounded-xl border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-bold text-primary-700 shadow-sm transition-all hover:bg-primary-100 hover:text-primary-800 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50 dark:hover:text-primary-200"
+              className="pillio-button bg-primary-50 px-5 py-2.5 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
             >
               My Appointments
             </button>
             <button
               onClick={logout}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white"
+              className="pillio-button bg-white border border-slate-200 px-5 py-2.5 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               Sign out
             </button>
@@ -178,38 +181,49 @@ export default function Dashboard() {
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary-600 to-primary-800 px-6 py-16 shadow-2xl shadow-primary-900/20 sm:px-12 sm:py-20 dark:from-primary-800 dark:to-slate-900">
-          {/* Animated Blobs */}
-          <div className="absolute -right-20 -top-20 h-96 w-96 rounded-full bg-white/10 blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-white/10 blur-3xl animate-blob" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-400/20 blur-3xl animate-blob" style={{ animationDelay: '4s' }}></div>
-          
+        <div className="relative overflow-hidden rounded-[40px] bg-white/70 backdrop-blur-3xl px-6 py-16 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-white sm:px-12 sm:py-20 dark:bg-slate-900/80 dark:border-slate-800/80">
           <div className="relative z-10 mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-4 py-1.5 text-sm font-bold text-primary-600 dark:border-primary-900 dark:bg-primary-900/30 dark:text-primary-400">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500"></span>
               </span>
               AI Assistant is Online
             </div>
-            <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl drop-shadow-sm">
-              Your Health, <span className="text-primary-100">Our Priority</span>
+            <h2 className="text-[40px] font-black tracking-tight text-slate-900 sm:text-[64px] drop-shadow-sm leading-tight dark:text-white">
+              Your Health,<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-indigo-500">Our Priority</span>
             </h2>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-primary-50/90 leading-relaxed sm:text-xl">
+            <p className="mx-auto mt-6 max-w-2xl text-lg font-medium text-slate-500 leading-relaxed sm:text-xl dark:text-slate-400">
               Consult top doctors in your city, check your symptoms instantly with our advanced AI, and get personalized lifestyle tips—all in one place.
             </p>
-            <div className="mt-10 flex justify-center gap-4">
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
               <button 
                 onClick={() => navigate('/chat')}
-                className="group relative overflow-hidden rounded-full bg-white px-8 py-4 text-sm font-bold text-primary-700 shadow-xl transition-all hover:scale-105 hover:shadow-2xl hover:shadow-white/20 dark:bg-slate-900 dark:text-white dark:hover:shadow-primary-500/20"
+                className="pillio-button bg-primary-600 px-8 py-4 text-white shadow-xl shadow-primary-500/20 hover:bg-primary-700 hover:shadow-primary-600/40 text-[15px]"
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  Start AI Consultation
-                  <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </span>
+                Start AI Consultation
+                <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
               </button>
+            </div>
+            
+            {/* Mock Stats */}
+            <div className="mt-12 flex items-center justify-center gap-8 border-t border-slate-200/50 pt-8 dark:border-slate-800/50">
+              <div>
+                <p className="text-3xl font-black text-slate-900 dark:text-white">10k+</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Patients Helped</p>
+              </div>
+              <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+              <div>
+                <p className="text-3xl font-black text-slate-900 dark:text-white">50+</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Top Doctors</p>
+              </div>
+              <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+              <div>
+                <p className="text-3xl font-black text-slate-900 dark:text-white">24/7</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">AI Support</p>
+              </div>
             </div>
           </div>
         </div>
@@ -230,25 +244,25 @@ export default function Dashboard() {
               <div key={category.name} className="col-span-1 contents">
                 <button
                   onClick={() => setSelectedSpecialty(selectedSpecialty === category.name ? null : category.name)}
-                  className={`group flex flex-col items-center justify-center rounded-2xl border p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:bg-slate-800 ${
+                  className={`group flex flex-col items-center justify-center rounded-[32px] border p-6 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:bg-slate-800 ${
                     selectedSpecialty === category.name 
-                      ? 'border-primary-500 bg-primary-50 shadow-primary-500/20 dark:border-primary-500 dark:bg-primary-900/20 ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-slate-950' 
-                      : 'border-slate-200 bg-white/50 hover:border-primary-300 hover:bg-white hover:shadow-primary-500/10 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-primary-500/50'
+                      ? 'border-primary-500 bg-white shadow-primary-500/20 dark:border-primary-500 dark:bg-slate-900 ring-4 ring-primary-500/20 dark:ring-primary-500/10' 
+                      : 'border-white bg-white/60 hover:bg-white dark:border-slate-800 dark:bg-slate-900/60'
                   }`}
                 >
-                  <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${category.color} text-3xl shadow-inner transition-transform group-hover:scale-110 dark:bg-opacity-20`}>
+                  <div className={`flex h-16 w-16 items-center justify-center rounded-[24px] ${category.color} text-3xl shadow-sm transition-transform group-hover:scale-110 dark:bg-opacity-20`}>
                     {category.icon}
                   </div>
-                  <span className={`mt-4 text-center text-sm font-bold transition-colors ${
+                  <span className={`mt-4 text-center text-sm font-black transition-colors ${
                     selectedSpecialty === category.name 
-                      ? 'text-primary-700 dark:text-primary-400' 
-                      : 'text-slate-700 group-hover:text-primary-600 dark:text-slate-300 dark:group-hover:text-primary-400'
+                      ? 'text-slate-900 dark:text-white' 
+                      : 'text-slate-600 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-white'
                   }`}>
                     {category.name}
                   </span>
                   
                   {/* Doctor Count Badge */}
-                  <span className="mt-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <span className="mt-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                     {doctors.filter(d => d.specialty === category.name).length} Doctors
                   </span>
                 </button>
@@ -341,7 +355,7 @@ export default function Dashboard() {
               <button 
                 key={idx}
                 onClick={() => setSelectedTip(tip)}
-                className={`group flex text-left overflow-hidden rounded-2xl border border-slate-200 bg-white/50 backdrop-blur-sm shadow-sm transition-all duration-300 hover:shadow-xl ${tip.hoverColor} dark:border-slate-800 dark:bg-slate-900/50 hover:-translate-y-1`}
+                className={`group flex text-left overflow-hidden pillio-card transition-all duration-300 hover:-translate-y-1 p-0 flex-row items-stretch`}
               >
                 <div className={`flex w-1/3 items-center justify-center bg-gradient-to-br ${tip.color} text-5xl transition-transform duration-300 group-hover:scale-105`}>
                   {tip.icon}

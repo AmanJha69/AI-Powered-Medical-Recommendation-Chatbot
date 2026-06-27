@@ -35,7 +35,7 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
 
   res.status(201).json({
     token,
-    user: { id: user._id, name: user.name, email: user.email },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, doctorId: user.doctorId },
   });
 }
 
@@ -62,7 +62,7 @@ export async function login(req: AuthRequest, res: Response): Promise<void> {
   const token = signToken(user._id.toString());
   res.json({
     token,
-    user: { id: user._id, name: user.name, email: user.email },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, doctorId: user.doctorId },
   });
 }
 
@@ -72,5 +72,5 @@ export async function getMe(req: AuthRequest, res: Response): Promise<void> {
     res.status(404).json({ message: 'User not found' });
     return;
   }
-  res.json({ id: user._id, name: user.name, email: user.email });
+  res.json({ id: user._id, name: user.name, email: user.email, role: user.role, doctorId: user.doctorId });
 }

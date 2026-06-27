@@ -1,6 +1,20 @@
 import { Doctor } from '../models/Doctor';
+import { User } from '../models/User';
+import bcrypt from 'bcryptjs';
 
 export const doctorsSeedData = [
+  {
+    name: 'Dr. Aman Jha',
+    specialty: 'Dermatologist',
+    location: 'Skin Care & Dermatology, Main Hospital',
+    rating: 5.0,
+    contact: '+1-555-1234',
+    symptomsKeywords: ['rash', 'acne', 'skin', 'itching', 'eczema', 'dermatitis', 'hair loss'],
+    experienceYears: 10,
+    patientsCount: 3000,
+    about: 'Expert in clinical and cosmetic dermatology.',
+    fee: 500
+  },
   {
     name: 'Dr. Sarah Mitchell',
     specialty: 'General Physician',
@@ -96,8 +110,68 @@ export const doctorsSeedData = [
     rating: 4.6,
     contact: '+1-555-0112',
     symptomsKeywords: ['eye', 'vision', 'blurry', 'red eye', 'conjunctivitis'],
+    experienceYears: 18,
+    patientsCount: 6000,
+    about: 'Expert in vision correction and eye health.',
+    fee: 600
   },
+  {
+    name: 'Dr. Rachel Green',
+    specialty: 'Gynecologist',
+    location: 'Women Health Clinic, Southville',
+    rating: 4.8,
+    contact: '+1-555-0113',
+    symptomsKeywords: ['pregnancy', 'period', 'women', 'maternity', 'gynecology'],
+    experienceYears: 12,
+    patientsCount: 4500,
+    about: 'Dedicated to providing comprehensive healthcare for women.',
+    fee: 700
+  },
+  {
+    name: 'Dr. Simon Cowell',
+    specialty: 'Dentist',
+    location: 'Smile Dental Care, Downtown',
+    rating: 4.7,
+    contact: '+1-555-0114',
+    symptomsKeywords: ['tooth', 'toothache', 'dental', 'gums', 'cavity'],
+    experienceYears: 8,
+    patientsCount: 2000,
+    about: 'Specializes in cosmetic dentistry and oral hygiene.',
+    fee: 400
+  },
+  {
+    name: 'Dr. Olivia Martinez',
+    specialty: 'Urologist',
+    location: 'Men & Women Urology, Central District',
+    rating: 4.9,
+    contact: '+1-555-0115',
+    symptomsKeywords: ['kidney', 'urinary', 'bladder', 'prostate', 'urine'],
+    experienceYears: 15,
+    patientsCount: 5000,
+    about: 'Providing advanced care for urinary tract issues.',
+    fee: 800
+  }
 ];
+
+async function createAccountsForDoctors() {
+  const doctors = await Doctor.find();
+  const passwordHash = await bcrypt.hash('password123', 12);
+  
+  for (const doc of doctors) {
+    const email = `${doc.name.toLowerCase().replace(/[^a-z]/g, '')}@example.com`;
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      await User.create({
+        name: doc.name,
+        email,
+        passwordHash,
+        role: 'doctor',
+        doctorId: doc._id
+      });
+      console.log(`Created account for ${doc.name} (${email})`);
+    }
+  }
+}
 
 export async function seedDoctorsIfEmpty(): Promise<void> {
   const count = await Doctor.countDocuments();
@@ -105,10 +179,14 @@ export async function seedDoctorsIfEmpty(): Promise<void> {
     await Doctor.insertMany(doctorsSeedData);
     console.log(`Auto-seeded ${doctorsSeedData.length} doctors`);
   }
+  // Ensure all doctors have user accounts
+  await createAccountsForDoctors();
 }
 
 export async function reseedDoctors(): Promise<void> {
   await Doctor.deleteMany({});
+  await User.deleteMany({ role: 'doctor' });
   await Doctor.insertMany(doctorsSeedData);
   console.log(`Seeded ${doctorsSeedData.length} doctors`);
+  await createAccountsForDoctors();
 }

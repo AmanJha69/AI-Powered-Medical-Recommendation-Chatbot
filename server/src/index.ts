@@ -11,6 +11,7 @@ import authRoutes from './routes/auth';
 import chatRoutes from './routes/chats';
 import doctorRoutes from './routes/doctors';
 import appointmentRoutes from './routes/appointments';
+import doctorDashboardRoutes from './routes/doctorDashboard';
 import { setupSocket } from './socket';
 
 dotenv.config();
@@ -44,6 +45,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/doctor-dashboard', doctorDashboardRoutes);
 
 app.use(errorHandler);
 

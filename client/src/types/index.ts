@@ -2,6 +2,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role?: 'user' | 'doctor';
+  doctorId?: string;
 }
 
 export interface MedicineSuggestion {

@@ -8,9 +8,11 @@ import ChatBubble from './ChatBubble';
 import ChatInput from './ChatInput';
 import TypingIndicator from './TypingIndicator';
 import SymptomChips from './SymptomChips';
+import { useAuth } from '../context/AuthContext';
 import type { Chat, Message } from '../types';
 
 export default function ChatWidget() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [, setChats] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -108,8 +110,8 @@ export default function ChatWidget() {
     }
   };
 
-  // Do not render the widget on the full screen chat page
-  if (window.location.pathname === '/chat') {
+  // Do not render the widget on the full screen chat page or for doctors
+  if (window.location.pathname === '/chat' || user?.role === 'doctor') {
     return null;
   }
 

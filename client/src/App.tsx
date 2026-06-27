@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ChatPage from './pages/ChatPage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import DoctorDashboard from './pages/DoctorDashboard';
 import ChatWidget from './components/ChatWidget';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    if (user.role === 'doctor') return <Navigate to="/doctor/dashboard" replace />;
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -64,12 +68,20 @@ function AnimatedRoutes() {
         <Route
           path="/appointments"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['user']}>
               <AppointmentsPage />
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/doctor/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['doctor']}>
+              <DoctorDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to={location.pathname.startsWith('/doctor') ? "/doctor/dashboard" : "/"} replace />} />
       </Routes>
     </AnimatePresence>
   );

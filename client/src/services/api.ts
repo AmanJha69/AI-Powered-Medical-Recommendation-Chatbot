@@ -45,4 +45,9 @@ export const appointmentApi = {
   reschedule: (id: string, data: { date: string; time: string }) => api.put(`/appointments/${id}`, data),
 };
 
+export const doctorDashboardApi = {
+  getAppointments: () => api.get('/doctor-dashboard/appointments').then(res => res.data),
+  updateStatus: (id: string, status: string) => api.put(`/doctor-dashboard/appointments/${id}/status`, { status }).then(res => res.data),
+};
+
 export default api;

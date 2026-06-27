@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 import type { Attachment } from '../types';
 
 interface ChatInputProps {

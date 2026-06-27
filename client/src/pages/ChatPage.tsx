@@ -126,10 +126,16 @@ export default function ChatPage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.3 }}
-      className="flex h-screen flex-col bg-slate-50 transition-colors duration-300 dark:bg-slate-950"
+      className="flex h-screen flex-col bg-[#f8fafd] transition-colors duration-300 dark:bg-slate-950 relative overflow-hidden"
     >
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-3">
+      {/* Premium Pillio Abstract Background */}
+      <div className="absolute inset-0 z-0 opacity-40 dark:opacity-20 pointer-events-none">
+        <img src="/pillio-bg.png" alt="abstract background" className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-lighten" />
+      </div>
+
+      <header className="relative z-10 mx-4 mt-4 mb-2 md:mx-auto w-full max-w-7xl">
+        <div className="glass-panel rounded-[24px] px-4 py-3 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/')}
             className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
@@ -168,22 +174,25 @@ export default function ChatPage() {
             Logout
           </button>
         </div>
+        </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <ChatSidebar
-          chats={chats}
-          activeChatId={activeChatId}
-          onSelectChat={loadChat}
-          onNewChat={handleNewChat}
-          onDeleteChat={handleDeleteChat}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
+      <div className="relative z-10 flex flex-1 overflow-hidden mx-4 md:mx-auto w-full max-w-7xl mb-4 gap-4">
+        <div className="h-full">
+          <ChatSidebar
+            chats={chats}
+            activeChatId={activeChatId}
+            onSelectChat={loadChat}
+            onNewChat={handleNewChat}
+            onDeleteChat={handleDeleteChat}
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+        </div>
 
-        <main className="flex flex-1 flex-col bg-slate-50 dark:bg-slate-950">
+        <main className="flex flex-1 flex-col overflow-hidden pillio-card p-0">
           {!activeChatId ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-4">
+            <div className="flex flex-1 flex-col items-center justify-center px-4 relative z-10">
               <div className="max-w-lg text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-3xl dark:bg-primary-900/50">
                   💬
