@@ -177,7 +177,7 @@ export default function AppointmentsPage() {
                       </div>
                       
                       <div className="mt-6 flex flex-col gap-3">
-                        {apt.status !== 'cancelled' && (
+                        {apt.status !== 'cancelled' && apt.status !== 'completed' && (
                           <button 
                             onClick={() => setRescheduleId(apt._id)}
                             className="w-full rounded-xl border-2 border-slate-200 bg-transparent py-3 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800"
@@ -185,7 +185,7 @@ export default function AppointmentsPage() {
                             Reschedule
                           </button>
                         )}
-                        {apt.status !== 'cancelled' && (
+                        {apt.status !== 'cancelled' && apt.status !== 'completed' && (
                           <button 
                             onClick={() => handleCancel(apt._id)}
                             className="w-full rounded-xl bg-red-50 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"

@@ -31,7 +31,16 @@ export default function DoctorCard({ doctor, onClick, index = 0 }: DoctorCardPro
           </div>
         </div>
         <h3 className="text-xl font-bold text-slate-800 transition-colors group-hover:text-primary-600 dark:text-slate-100 dark:group-hover:text-primary-400">{doctor.name}</h3>
-        <p className="mt-1 text-sm font-semibold text-primary-600 dark:text-primary-400">{doctor.specialty}</p>
+        <div className="mt-1 flex items-center gap-2">
+          <p className="text-sm font-semibold text-primary-600 dark:text-primary-400">{doctor.specialty}</p>
+          <div className="flex items-center gap-1.5 ml-auto rounded-full bg-emerald-50 px-2 py-0.5 dark:bg-emerald-900/20">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Available</span>
+          </div>
+        </div>
         
         <div className="mt-5 space-y-3 text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-start gap-2.5">

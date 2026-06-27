@@ -47,6 +47,11 @@ export default function DoctorDashboard() {
     }
   };
 
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
+  const todayAppointments = appointments.filter(a => a.date === todayDate).length;
+  const pendingConsultations = appointments.filter(a => ['pending', 'confirmed'].includes(a.status)).length;
+  const completedAppointments = appointments.filter(a => a.status === 'completed').length;
+
   return (
     <div className="min-h-screen bg-[#f8fafd] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
       <div className="absolute inset-0 z-0 opacity-40 dark:opacity-20 pointer-events-none">
@@ -81,6 +86,32 @@ export default function DoctorDashboard() {
             <p className="text-slate-500 font-medium mt-1">Manage your upcoming appointments and patient requests.</p>
           </div>
         </div>
+
+        {!loading && (
+          <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div className="pillio-card flex items-center gap-6 py-6 px-8 hover-magnetic">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 text-3xl dark:bg-primary-900/30 shadow-sm border border-primary-100 dark:border-primary-800">📅</div>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Patients Today</p>
+                <p className="text-4xl font-black text-slate-900 dark:text-white">{todayAppointments}</p>
+              </div>
+            </div>
+            <div className="pillio-card flex items-center gap-6 py-6 px-8 hover-magnetic">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl dark:bg-amber-900/30 shadow-sm border border-amber-100 dark:border-amber-800">⏳</div>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending</p>
+                <p className="text-4xl font-black text-slate-900 dark:text-white">{pendingConsultations}</p>
+              </div>
+            </div>
+            <div className="pillio-card flex items-center gap-6 py-6 px-8 hover-magnetic">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-3xl dark:bg-emerald-900/30 shadow-sm border border-emerald-100 dark:border-emerald-800">✅</div>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Completed</p>
+                <p className="text-4xl font-black text-slate-900 dark:text-white">{completedAppointments}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

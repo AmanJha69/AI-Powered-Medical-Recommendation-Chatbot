@@ -110,8 +110,14 @@ export default function ChatWidget() {
     }
   };
 
-  // Do not render the widget on the full screen chat page or for doctors
-  if (window.location.pathname === '/chat' || user?.role === 'doctor') {
+  // Do not render the widget on the full screen chat page, login, register, for doctors, or unauthenticated users
+  if (
+    window.location.pathname === '/chat' ||
+    window.location.pathname === '/login' ||
+    window.location.pathname === '/register' ||
+    user?.role === 'doctor' ||
+    !user
+  ) {
     return null;
   }
 

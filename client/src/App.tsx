@@ -92,7 +92,29 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Toaster position="top-right" />
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              className: 'glass-panel !rounded-2xl !bg-white/80 dark:!bg-slate-900/80 !shadow-xl !backdrop-blur-xl border !border-white/50 dark:!border-slate-700/50',
+              style: {
+                padding: '16px',
+                color: 'inherit',
+                maxWidth: '400px',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              }
+            }}
+          />
           <AnimatedRoutes />
           
           {/* ChatWidget is available globally but hidden on /chat via its own internal logic */}
