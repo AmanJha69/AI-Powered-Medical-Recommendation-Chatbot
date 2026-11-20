@@ -84,7 +84,11 @@ export function setupSocket(io: Server): void {
         });
 
         if (chat.title === 'New chat') {
-          chat.title = content.slice(0, 50) + (content.length > 50 ? '...' : '');
+          if (content && content.trim()) {
+            chat.title = content.slice(0, 50) + (content.length > 50 ? '...' : '');
+          } else if (attachments && attachments.length > 0) {
+            chat.title = `📄 ${attachments[0].name.slice(0, 40)}`;
+          }
         }
         chat.updatedAt = new Date();
         await chat.save();

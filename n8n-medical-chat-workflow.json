@@ -1,0 +1,157 @@
+{
+  "name": "Dr. G Medical Chat (with Document Analysis)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "medical-chat",
+        "responseMode": "lastNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-attachment",
+              "leftValue": "={{ $json.body.attachment }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-attachment",
+      "name": "Has Attachment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "promptType": "define",
+        "text": "={{ $json.body.userMessage || 'Please analyze this medical document/image for me.' }}",
+        "mediaType": "image",
+        "inputDataFieldName": "data",
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0.4
+        },
+        "systemMessage": "You are Dr. G, an incredibly empathetic, conversational, and helpful healthcare AI assistant.\n\nIMPORTANT RULES:\n- Reply in a warm, conversational, and natural tone, exactly like a human doctor or ChatGPT.\n- The user has uploaded a medical document, report, or image. Analyze it thoroughly. Explain what the document says, what values are normal/abnormal, what the medicine is for, or summarize the medical report in plain English.\n- The user is located in Jamshedpur. ALWAYS recommend doctors and hospitals located in Jamshedpur based on the patient's issue.\n- DO NOT recommend any medicines. If the user asks for medicine, politely respond that you are an AI chatbot and cannot prescribe or recommend any medicine.\n- You are NOT a human doctor. Use phrases like \"possible\", \"may\", \"could be\".\n- For emergency symptoms, strongly urge immediate emergency care and set urgency to \"high\".\n- If the user asks about ANYTHING unrelated to health, politely refuse.\n\nRespond ONLY with valid JSON (no markdown, no code fences):\n{\n  \"reply\": \"Conversational, empathetic response with detailed analysis of the uploaded document...\",\n  \"possibleCauses\": [\"List\", \"of\", \"possible\", \"conditions\"],\n  \"healthTips\": [\"List\", \"of\", \"recommendations\"],\n  \"urgency\": \"low | medium | high\",\n  \"recommendedSpecialty\": \"Matching doctor specialty\"\n}"
+      },
+      "id": "gemini-vision",
+      "name": "Gemini Vision (Analyze Document)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [740, 180],
+      "notesInFlow": true,
+      "notes": "Analyzes uploaded medical images/documents with Gemini Vision"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "promptType": "define",
+        "text": "={{ $json.body.userMessage }}",
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0.4
+        },
+        "systemMessage": "You are Dr. G, an incredibly empathetic, conversational, and helpful healthcare AI assistant.\n\nIMPORTANT RULES:\n- Reply in a warm, conversational, and natural tone, exactly like a human doctor or ChatGPT. Do not just return sterile data.\n- The user is located in Jamshedpur. ALWAYS recommend doctors and hospitals located in Jamshedpur based on the patient's issue.\n- DO NOT recommend any medicines. If the user asks for medicine, politely respond that you are an AI chatbot and cannot prescribe or recommend any medicine.\n- You are NOT a human doctor. Use phrases like \"possible\", \"may\", \"could be\".\n- For emergency symptoms, strongly urge immediate emergency care and set urgency to \"high\".\n- If the user asks about ANYTHING unrelated to health, politely refuse.\n- If the user is just saying hello, leave 'recommendedSpecialty' EMPTY (\"\").\n\nConversation history:\n{{ $json.body.history ? JSON.stringify($json.body.history) : 'No previous messages' }}\n\nRespond ONLY with valid JSON (no markdown, no code fences):\n{\n  \"reply\": \"Conversational, empathetic response...\",\n  \"possibleCauses\": [\"List\", \"of\", \"possible\", \"conditions\"],\n  \"healthTips\": [\"List\", \"of\", \"home\", \"remedies\"],\n  \"urgency\": \"low | medium | high\",\n  \"recommendedSpecialty\": \"Matching doctor specialty\"\n}"
+      },
+      "id": "gemini-text",
+      "name": "Gemini Text (Chat Only)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [740, 420],
+      "notesInFlow": true,
+      "notes": "Handles regular text-only medical chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare binary data from base64 attachment for the Gemini Vision node\nconst attachment = $input.first().json.body.attachment;\n\nif (attachment && attachment.base64) {\n  const binaryData = Buffer.from(attachment.base64, 'base64');\n  \n  const items = [{\n    json: $input.first().json,\n    binary: {\n      data: {\n        data: attachment.base64,\n        mimeType: attachment.mimeType,\n        fileName: attachment.name,\n      }\n    }\n  }];\n  \n  return items;\n}\n\nreturn $input.all();"
+      },
+      "id": "prepare-binary",
+      "name": "Prepare Binary Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [580, 180],
+      "notesInFlow": true,
+      "notes": "Converts base64 attachment to binary for Gemini Vision"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Has Attachment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Attachment?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Binary Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gemini Text (Chat Only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Binary Data": {
+      "main": [
+        [
+          {
+            "node": "Gemini Vision (Analyze Document)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

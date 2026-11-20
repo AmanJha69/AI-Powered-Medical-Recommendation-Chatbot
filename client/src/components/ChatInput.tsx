@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
+import toast from 'react-hot-toast';
 import type { Attachment } from '../types';
+
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface ChatInputProps {
   onSend: (content: string, attachments?: Attachment[]) => void;
@@ -36,6 +40,12 @@ export default function ChatInput({
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast.error(`File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = () => {

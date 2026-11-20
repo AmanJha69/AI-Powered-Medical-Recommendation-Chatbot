@@ -254,14 +254,28 @@ export async function generateMedicalResponse(
 
   if (useN8n && n8nWebhookUrl) {
     try {
+      // Build payload — include attachments when present so n8n can analyse documents/images
+      const webhookPayload: Record<string, any> = {
+        chatId,
+        userMessage: userMessage || (attachments && attachments.length > 0 ? 'Please analyze this medical document.' : ''),
+        history: history.reverse(),
+      };
+
+      if (attachments && attachments.length > 0) {
+        // Send the first attachment's base64 data, mime type, and filename
+        const att = attachments[0];
+        webhookPayload.attachment = {
+          name: att.name,
+          mimeType: att.type,
+          // Strip the data-URL prefix ("data:image/png;base64,") so n8n gets raw base64
+          base64: att.data.includes(',') ? att.data.split(',')[1] : att.data,
+        };
+      }
+
       const response = await fetch(n8nWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chatId,
-          userMessage,
-          history: history.reverse(),
-        }),
+        body: JSON.stringify(webhookPayload),
       });
 
       if (!response.ok) {
